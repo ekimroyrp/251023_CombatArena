@@ -5,6 +5,7 @@ import Stats from "stats.js";
 import { createControlsPanel } from "./ui/gui.js";
 import { generateArenaLayout } from "./generation/arenaGenerator.js";
 import { buildBlockoutGroup } from "./geometry/blockoutBuilder.js";
+import { createGroundGrid, updateGroundGrid } from "./geometry/groundGrid.js";
 import { disposeHierarchy } from "./utils/dispose.js";
 import { exportBlockoutOBJ } from "./utils/exporter.js";
 
@@ -67,8 +68,10 @@ export function initApp(container) {
     controls,
     stats,
     params,
-    currentArena: null
+    currentArena: null,
+    groundGrid: createGroundGrid(params.cellSize)
   };
+  state.scene.add(state.groundGrid.mesh);
 
   const controlsPanel = createControlsPanel(params, {
     onChange: () => rebuildArena(state),
@@ -106,6 +109,7 @@ export function initApp(container) {
 function rebuildArena(state) {
   const layout = generateArenaLayout(state.params);
   const blockout = buildBlockoutGroup(layout);
+  updateGroundGrid(state.groundGrid, layout.cellSize);
 
   if (state.currentArena) {
     disposeHierarchy(state.currentArena);

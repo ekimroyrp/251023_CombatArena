@@ -12,6 +12,7 @@ Procedural FPS arena blockout generator built with Three.js. The tool carves a g
 - Cover probability slider plus ramp probability to control inter-floor connectors.
 - One-click OBJ export from the Actions panel for bringing blockouts into DCC tools or other engines.
 - Merged floor, wall, cover, and ramp meshes to keep draw calls low while iterating.
+- Houdini-style infinite ground grid that respects the cell size and fades with distance for orientation.
 
 ## Scripts
 - `npm run dev` - start Vite with hot reload.
