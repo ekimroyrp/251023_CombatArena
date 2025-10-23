@@ -9,6 +9,7 @@ import { disposeHierarchy } from "./utils/dispose.js";
 
 const DEFAULT_PARAMS = {
   seed: "1337",
+  type: "Halo",
   gridWidth: 32,
   gridHeight: 24,
   cellSize: 4,

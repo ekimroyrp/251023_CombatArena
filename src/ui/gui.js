@@ -1,11 +1,16 @@
 import GUI from "lil-gui";
 
+export const TYPE_OPTIONS = ["Halo", "Counter Strike 2", "Quake"];
 export const CORRIDOR_OPTIONS = ["L", "Manhattan", "Bresenham"];
 
 export function createControlsPanel(params, callbacks) {
   const gui = new GUI();
 
   const layoutFolder = gui.addFolder("Layout");
+  layoutFolder
+    .add(params, "type", TYPE_OPTIONS)
+    .name("Type")
+    .onFinishChange(callbacks.onChange);
   const seedController = layoutFolder
     .add(params, "seed")
     .name("Seed")

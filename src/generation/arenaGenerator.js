@@ -1,6 +1,47 @@
 import { getCorridorPath } from "./corridors.js";
 import { createRng, randomInt, shuffleInPlace } from "../utils/random.js";
 
+const STYLE_PROFILES = {
+  Halo: {
+    roomDensity: 1.0,
+    verticality: 1.3,
+    loopFactor: 1.2,
+    rampBias: 1.5,
+    coverBias: 1.15,
+    corridorStyle: "L",
+    corridorBlend: 0.3,
+    corridorPadding: 1,
+    longRoomBias: 0.45,
+    rectangularity: 1.25
+  },
+  "Counter Strike 2": {
+    roomDensity: 0.9,
+    verticality: 0.75,
+    loopFactor: 0.7,
+    rampBias: 0.6,
+    coverBias: 1.45,
+    corridorStyle: "Manhattan",
+    corridorBlend: 0.8,
+    corridorPadding: 1,
+    longRoomBias: 0.7,
+    rectangularity: 1.6
+  },
+  Quake: {
+    roomDensity: 1.25,
+    verticality: 1.6,
+    loopFactor: 1.5,
+    rampBias: 1.9,
+    coverBias: 0.75,
+    corridorStyle: "Bresenham",
+    corridorBlend: 0.7,
+    corridorPadding: 2,
+    carveDiagonals: true,
+    longRoomBias: 0.35,
+    rectangularity: 1.15,
+    atriumChance: 0.2
+  }
+};
+
 export function generateArenaLayout(options) {
   const config = normalizeOptions(options);
   const floorThickness = Math.max(0.5, config.cellSize * 0.1);
@@ -48,20 +89,55 @@ function normalizeOptions(options) {
   const width = clamp(Math.floor(options.gridWidth ?? 32), 8, 96);
   const height = clamp(Math.floor(options.gridHeight ?? 24), 8, 96);
   const maxRoomSize = clamp(Math.floor(options.maxRoomSize ?? 8), 3, 24);
-  const rooms = clamp(Math.floor(options.rooms ?? 10), 1, 96);
+
+  const type = options.type ?? "Halo";
+  const styleProfile = STYLE_PROFILES[type] ?? STYLE_PROFILES.Halo;
+
+  const baseRooms = clamp(Math.floor(options.rooms ?? 10), 1, 96);
+  const baseFloors = clamp(Math.floor(options.floors ?? 1), 1, 8);
+  const rooms = clamp(
+    Math.round(baseRooms * (styleProfile.roomDensity ?? 1)),
+    1,
+    96
+  );
+  const floors = clamp(
+    Math.round(baseFloors * (styleProfile.verticality ?? 1)),
+    1,
+    8
+  );
+
+  const coverProbability = clamp01(
+    (options.coverProbability ?? 0.1) * (styleProfile.coverBias ?? 1)
+  );
+  const rampProbability = clamp01(
+    (options.rampProbability ?? 0.05) * (styleProfile.rampBias ?? 1)
+  );
+
+  const corridorStyle =
+    options.corridorStyle ?? styleProfile.corridorStyle ?? "L";
 
   return {
     seed: options.seed ?? "0",
+    type,
+    styleProfile,
     width,
     height,
     cellSize: clamp(options.cellSize ?? 4, 1, 10),
     rooms,
-    floors: clamp(Math.floor(options.floors ?? 1), 1, 8),
+    floors,
     maxRoomSize: Math.min(maxRoomSize, width - 2, height - 2),
-    corridorStyle: options.corridorStyle ?? "L",
-    coverProbability: clamp01(options.coverProbability ?? 0.1),
-    rampProbability: clamp01(options.rampProbability ?? 0.05),
-    wallHeight: clamp(options.wallHeight ?? 6, 2, 16)
+    corridorStyle,
+    styleCorridor: styleProfile.corridorStyle ?? corridorStyle,
+    corridorBlend: clamp01(styleProfile.corridorBlend ?? 0),
+    corridorPadding: Math.max(0, Math.round(styleProfile.corridorPadding ?? 1)),
+    carveDiagonals: Boolean(styleProfile.carveDiagonals),
+    longRoomBias: clamp01(styleProfile.longRoomBias ?? 0.5),
+    rectangularity: Math.max(1, styleProfile.rectangularity ?? 1),
+    atriumChance: clamp01(styleProfile.atriumChance ?? 0),
+    coverProbability,
+    rampProbability,
+    wallHeight: clamp(options.wallHeight ?? 6, 2, 16),
+    loopFactor: Math.max(0, styleProfile.loopFactor ?? 1)
   };
 }
 
@@ -84,13 +160,40 @@ function carveRooms(grid, config, rng) {
   while (rooms.length < config.rooms && attempts < attemptsLimit) {
     attempts += 1;
 
+    let widthLimit = config.maxRoomSize;
+    let heightLimit = config.maxRoomSize;
+
+    if (rng() < config.longRoomBias) {
+      const stretched = Math.round(config.maxRoomSize * config.rectangularity);
+      if (rng() < 0.5) {
+        widthLimit = Math.min(stretched, config.width - 2);
+      } else {
+        heightLimit = Math.min(stretched, config.height - 2);
+      }
+    }
+
+    if (rng() < config.atriumChance) {
+      const scale = 1 + rng() * 0.6;
+      widthLimit = Math.min(
+        Math.round(config.maxRoomSize * scale),
+        config.width - 2
+      );
+      heightLimit = Math.min(
+        Math.round(config.maxRoomSize * scale),
+        config.height - 2
+      );
+    }
+
+    widthLimit = Math.max(3, widthLimit);
+    heightLimit = Math.max(3, heightLimit);
+
     const roomWidth = clamp(
-      randomInt(rng, 3, config.maxRoomSize),
+      randomInt(rng, 3, widthLimit),
       3,
       config.width - 2
     );
     const roomHeight = clamp(
-      randomInt(rng, 3, config.maxRoomSize),
+      randomInt(rng, 3, heightLimit),
       3,
       config.height - 2
     );
@@ -202,8 +305,11 @@ function connectRooms(grid, rooms, config, rng) {
     remaining.splice(index, 1);
   }
 
-  // Add a couple of extra loops to avoid overly linear layouts.
-  for (let i = 0; i < Math.min(rooms.length / 3, 3); i += 1) {
+  const loopBudget = Math.round(
+    Math.min(rooms.length * config.loopFactor * 0.15, rooms.length - 1)
+  );
+
+  for (let i = 0; i < loopBudget; i += 1) {
     const a = rooms[randomInt(rng, 0, rooms.length - 1)];
     const b = rooms[randomInt(rng, 0, rooms.length - 1)];
     if (a === b) {
@@ -214,7 +320,18 @@ function connectRooms(grid, rooms, config, rng) {
 }
 
 function carveCorridor(grid, from, to, config, rng) {
-  const path = getCorridorPath(config.corridorStyle, from, to, rng);
+  let corridorStyle = config.corridorStyle;
+  if (
+    config.styleCorridor &&
+    config.styleCorridor !== corridorStyle &&
+    typeof rng === "function" &&
+    rng() < config.corridorBlend
+  ) {
+    corridorStyle = config.styleCorridor;
+  }
+
+  const path = getCorridorPath(corridorStyle, from, to, rng);
+  const padding = Math.max(0, config.corridorPadding ?? 1);
 
   for (const point of path) {
     if (!insideBounds(grid, point.x, point.y)) {
@@ -223,23 +340,34 @@ function carveCorridor(grid, from, to, config, rng) {
     grid[point.y][point.x].solid = false;
 
     // Soften hard diagonals by carving a plus-shaped footprint.
-    carvePadding(grid, point.x, point.y);
+    carvePadding(grid, point.x, point.y, padding, config.carveDiagonals);
   }
 }
 
-function carvePadding(grid, x, y) {
-  const offsets = [
-    [1, 0],
-    [-1, 0],
-    [0, 1],
-    [0, -1]
-  ];
+function carvePadding(grid, x, y, radius, includeDiagonals) {
+  for (let step = 1; step <= radius; step += 1) {
+    const offsets = [
+      [step, 0],
+      [-step, 0],
+      [0, step],
+      [0, -step]
+    ];
 
-  for (const [dx, dy] of offsets) {
-    const nx = x + dx;
-    const ny = y + dy;
-    if (insideBounds(grid, nx, ny)) {
-      grid[ny][nx].solid = false;
+    if (includeDiagonals) {
+      offsets.push(
+        [step, step],
+        [step, -step],
+        [-step, step],
+        [-step, -step]
+      );
+    }
+
+    for (const [dx, dy] of offsets) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (insideBounds(grid, nx, ny)) {
+        grid[ny][nx].solid = false;
+      }
     }
   }
 }
