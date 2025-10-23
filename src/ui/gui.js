@@ -43,6 +43,18 @@ export function createControlsPanel(params, callbacks) {
     .add(params, "corridorStyle", CORRIDOR_OPTIONS)
     .name("Corridor")
     .onFinishChange(callbacks.onChange);
+  layoutFolder
+    .add(params, "wallHeight", 3, 12, 0.5)
+    .name("Wall Height")
+    .onFinishChange(callbacks.onChange);
+  layoutFolder
+    .add(params, "platforms", 0, 10, 1)
+    .name("Platforms")
+    .onFinishChange(callbacks.onChange);
+  layoutFolder
+    .add(params, "platformSeed", 0, 999, 1)
+    .name("Platform Seed")
+    .onFinishChange(callbacks.onChange);
   layoutFolder.open();
 
   const propsFolder = gui.addFolder("Props");
@@ -53,14 +65,6 @@ export function createControlsPanel(params, callbacks) {
   propsFolder
     .add(params, "rampProbability", 0, 0.3, 0.01)
     .name("Ramp Chance")
-    .onFinishChange(callbacks.onChange);
-  propsFolder
-    .add(params, "wallHeight", 3, 12, 0.5)
-    .name("Wall Height")
-    .onFinishChange(callbacks.onChange);
-  propsFolder
-    .add(params, "platforms", 0, 6, 1)
-    .name("Platforms")
     .onFinishChange(callbacks.onChange);
   propsFolder.open();
 

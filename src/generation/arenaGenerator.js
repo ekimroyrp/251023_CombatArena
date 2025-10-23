@@ -63,7 +63,10 @@ export function generateArenaLayout(options) {
 
     connectRooms(grid, rooms, config, levelRng);
     sprinkleCover(grid, config, levelRng);
-    const platformCount = buildPlatforms(grid, config, levelRng);
+    const platformRng = createRng(
+      `${config.seed}-platform-${config.platformSeed}-L${levelIndex}`
+    );
+    const platformCount = buildPlatforms(grid, config, platformRng);
 
     levels.push({
       index: levelIndex,
@@ -108,11 +111,12 @@ function normalizeOptions(options) {
     8
   );
 
-  const basePlatforms = clamp(Math.floor(options.platforms ?? 0), 0, 12);
+  const platformSeed = clamp(Math.floor(options.platformSeed ?? 0), 0, 999);
+  const basePlatforms = clamp(Math.floor(options.platforms ?? 0), 0, 20);
   const platformsPerFloor = clamp(
     Math.round(basePlatforms * (styleProfile.verticality ?? 1)),
     0,
-    12
+    20
   );
 
   const coverProbability = clamp01(
@@ -135,6 +139,7 @@ function normalizeOptions(options) {
     rooms,
     floors,
     platformsPerFloor,
+    platformSeed,
     maxRoomSize: Math.min(maxRoomSize, width - 2, height - 2),
     corridorStyle,
     styleCorridor: styleProfile.corridorStyle ?? corridorStyle,
