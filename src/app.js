@@ -12,6 +12,7 @@ const DEFAULT_PARAMS = {
   gridWidth: 32,
   gridHeight: 24,
   cellSize: 4,
+  floors: 1,
   rooms: 10,
   maxRoomSize: 8,
   corridorStyle: "L",
@@ -28,7 +29,7 @@ export function initApp(container) {
   container.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0f151a);
+  scene.background = new THREE.Color(0x6b6d6f);
 
   const camera = new THREE.PerspectiveCamera(
     60,
@@ -84,7 +85,7 @@ export function initApp(container) {
 
 function rebuildArena(state) {
   const layout = generateArenaLayout(state.params);
-  const blockout = buildBlockoutGroup(layout, state.params);
+  const blockout = buildBlockoutGroup(layout);
 
   if (state.currentArena) {
     disposeHierarchy(state.currentArena);

@@ -1,29 +1,46 @@
 import { getCorridorPath } from "./corridors.js";
-import { createRng, randomInt } from "../utils/random.js";
+import { createRng, randomInt, shuffleInPlace } from "../utils/random.js";
 
 export function generateArenaLayout(options) {
   const config = normalizeOptions(options);
-  const rng = createRng(config.seed);
+  const floorThickness = Math.max(0.5, config.cellSize * 0.1);
+  const levelSpacing = config.wallHeight;
 
-  const grid = createGrid(config.width, config.height);
-  const rooms = carveRooms(grid, config, rng);
+  const levels = [];
 
-  if (rooms.length === 0) {
-    const fallback = createFallbackRoom(config);
-    paintRoom(grid, fallback);
-    rooms.push(fallback);
+  for (let levelIndex = 0; levelIndex < config.floors; levelIndex += 1) {
+    const levelSeed = `${config.seed}-L${levelIndex}`;
+    const levelRng = createRng(levelSeed);
+    const grid = createGrid(config.width, config.height);
+    const rooms = carveRooms(grid, config, levelRng);
+
+    if (rooms.length === 0) {
+      const fallback = createFallbackRoom(config);
+      paintRoom(grid, fallback);
+      rooms.push(fallback);
+    }
+
+    connectRooms(grid, rooms, config, levelRng);
+    sprinkleCover(grid, config, levelRng);
+
+    levels.push({
+      index: levelIndex,
+      elevation: levelIndex * levelSpacing,
+      width: config.width,
+      height: config.height,
+      grid,
+      rooms
+    });
   }
 
-  connectRooms(grid, rooms, config, rng);
-  sprinkleProps(grid, config, rng);
+  linkFloorsWithRamps(levels, config);
 
   return {
-    width: config.width,
-    height: config.height,
     cellSize: config.cellSize,
     wallHeight: config.wallHeight,
-    rooms,
-    grid
+    floorThickness,
+    levelSpacing,
+    levels
   };
 }
 
@@ -39,6 +56,7 @@ function normalizeOptions(options) {
     height,
     cellSize: clamp(options.cellSize ?? 4, 1, 10),
     rooms,
+    floors: clamp(Math.floor(options.floors ?? 1), 1, 8),
     maxRoomSize: Math.min(maxRoomSize, width - 2, height - 2),
     corridorStyle: options.corridorStyle ?? "L",
     coverProbability: clamp01(options.coverProbability ?? 0.1),
@@ -52,7 +70,8 @@ function createGrid(width, height) {
     Array.from({ length: width }, () => ({
       solid: true,
       cover: false,
-      ramp: false
+      rampUp: false,
+      rampDown: false
     }))
   );
 }
@@ -156,8 +175,9 @@ function connectRooms(grid, rooms, config, rng) {
 
     for (const source of connected) {
       for (const target of remaining) {
-        const distance = Math.abs(source.center.x - target.center.x) ** 2 +
-          Math.abs(source.center.y - target.center.y) ** 2;
+        const distance =
+          (source.center.x - target.center.x) ** 2 +
+          (source.center.y - target.center.y) ** 2;
         if (distance < bestDistance) {
           bestDistance = distance;
           bestPair = { source, target };
@@ -182,7 +202,7 @@ function connectRooms(grid, rooms, config, rng) {
     remaining.splice(index, 1);
   }
 
-  // Add a couple of extra loops to avoid linear levels.
+  // Add a couple of extra loops to avoid overly linear layouts.
   for (let i = 0; i < Math.min(rooms.length / 3, 3); i += 1) {
     const a = rooms[randomInt(rng, 0, rooms.length - 1)];
     const b = rooms[randomInt(rng, 0, rooms.length - 1)];
@@ -224,22 +244,65 @@ function carvePadding(grid, x, y) {
   }
 }
 
-function sprinkleProps(grid, config, rng) {
+function sprinkleCover(grid, config, rng) {
   for (let y = 0; y < grid.length; y += 1) {
     for (let x = 0; x < grid[y].length; x += 1) {
       const cell = grid[y][x];
       if (cell.solid) {
         continue;
       }
+      cell.cover = rng() < config.coverProbability;
+    }
+  }
+}
 
-      cell.cover = false;
-      cell.ramp = false;
+function linkFloorsWithRamps(levels, config) {
+  if (levels.length <= 1) {
+    return;
+  }
 
-      if (rng() < config.coverProbability) {
-        cell.cover = true;
-      } else if (rng() < config.rampProbability) {
-        cell.ramp = true;
+  for (let i = 0; i < levels.length - 1; i += 1) {
+    const lower = levels[i];
+    const upper = levels[i + 1];
+    const linkRng = createRng(`${config.seed}-link-${i}`);
+    const candidates = [];
+
+    for (let y = 0; y < lower.height; y += 1) {
+      for (let x = 0; x < lower.width; x += 1) {
+        if (!lower.grid[y][x].solid && !upper.grid[y][x].solid) {
+          candidates.push({ x, y });
+        }
       }
+    }
+
+    if (candidates.length === 0) {
+      // Create a fallback corridor column if the upper level is missing coverage here.
+      const fallback = lower.rooms[0]?.center ?? {
+        x: Math.floor(lower.width / 2),
+        y: Math.floor(lower.height / 2)
+      };
+      if (insideBounds(lower.grid, fallback.x, fallback.y)) {
+        lower.grid[fallback.y][fallback.x].solid = false;
+        upper.grid[fallback.y][fallback.x].solid = false;
+        candidates.push(fallback);
+      }
+    }
+
+    if (candidates.length === 0) {
+      continue;
+    }
+
+    shuffleInPlace(candidates, linkRng);
+    const desired = Math.round(candidates.length * config.rampProbability);
+    const count = Math.min(
+      candidates.length,
+      Math.max(1, desired)
+    );
+
+    for (let c = 0; c < count; c += 1) {
+      const cell = candidates[c];
+      lower.grid[cell.y][cell.x].rampUp = true;
+      upper.grid[cell.y][cell.x].rampDown = true;
     }
   }
 }

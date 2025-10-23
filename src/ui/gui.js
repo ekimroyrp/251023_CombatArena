@@ -23,6 +23,10 @@ export function createControlsPanel(params, callbacks) {
     .name("Cell Size")
     .onFinishChange(callbacks.onChange);
   layoutFolder
+    .add(params, "floors", 1, 5, 1)
+    .name("Floors")
+    .onFinishChange(callbacks.onChange);
+  layoutFolder
     .add(params, "rooms", 4, 48, 1)
     .name("Rooms")
     .onFinishChange(callbacks.onChange);

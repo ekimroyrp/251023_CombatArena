@@ -15,64 +15,83 @@ export function buildBlockoutGroup(layout) {
   const coverGeometries = [];
   const rampGeometries = [];
 
-  const { grid, width, height, cellSize, wallHeight } = layout;
-  const halfWidth = (width * cellSize) / 2;
-  const halfHeight = (height * cellSize) / 2;
-  const floorThickness = Math.max(0.5, cellSize * 0.1);
+  const { cellSize, wallHeight, floorThickness, levels } = layout;
+
   const wallThickness = Math.max(0.4, cellSize * 0.2);
 
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const cell = grid[y][x];
-      if (cell.solid) {
-        continue;
-      }
+  for (const level of levels) {
+    const halfWidth = (level.width * cellSize) / 2;
+    const halfHeight = (level.height * cellSize) / 2;
+    const floorY = level.elevation;
 
-      const wx = x * cellSize + cellSize / 2 - halfWidth;
-      const wz = y * cellSize + cellSize / 2 - halfHeight;
+    for (let y = 0; y < level.height; y += 1) {
+      for (let x = 0; x < level.width; x += 1) {
+        const cell = level.grid[y][x];
+        if (cell.solid) {
+          continue;
+        }
 
-      const floor = new THREE.BoxGeometry(cellSize, floorThickness, cellSize);
-      floor.translate(wx, -floorThickness / 2, wz);
-      floorGeometries.push(floor);
+        const wx = x * cellSize + cellSize / 2 - halfWidth;
+        const wz = y * cellSize + cellSize / 2 - halfHeight;
 
-      addWallsForCell({
-        x,
-        y,
-        wx,
-        wz,
-        grid,
-        width,
-        height,
-        wallThickness,
-        wallHeight,
-        cellSize,
-        wallGeometries
-      });
+        const floor = new THREE.BoxGeometry(cellSize, floorThickness, cellSize);
+        floor.translate(wx, floorY - floorThickness / 2, wz);
+        floorGeometries.push(floor);
 
-      if (cell.cover) {
-        const cover = new THREE.BoxGeometry(
-          cellSize * 0.6,
-          wallHeight * 0.4,
-          cellSize * 0.6
-        );
-        cover.translate(wx, wallHeight * 0.2, wz);
-        coverGeometries.push(cover);
-      } else if (cell.ramp) {
-        const ramp = new THREE.BoxGeometry(
+        addWallsForCell({
+          x,
+          y,
+          wx,
+          wz,
+          grid: level.grid,
+          width: level.width,
+          height: level.height,
+          wallThickness,
+          wallHeight,
           cellSize,
-          wallHeight * 0.2,
-          cellSize
-        );
-        ramp.translate(wx, wallHeight * 0.1, wz);
-        rampGeometries.push(ramp);
+          baseElevation: floorY,
+          wallGeometries
+        });
+
+        if (cell.cover) {
+          const cover = new THREE.BoxGeometry(
+            cellSize * 0.6,
+            wallHeight * 0.4,
+            cellSize * 0.6
+          );
+          cover.translate(wx, floorY + wallHeight * 0.2, wz);
+          coverGeometries.push(cover);
+        }
+
+        if (cell.rampUp) {
+          const ramp = createRampGeometry(cellSize, wallHeight);
+          ramp.translate(wx, floorY, wz);
+          rampGeometries.push(ramp);
+        }
       }
     }
   }
 
-  addMergedMesh(group, floorGeometries, new THREE.MeshStandardMaterial({ color: FLOOR_COLOR, roughness: 0.8 }));
-  addMergedMesh(group, wallGeometries, new THREE.MeshStandardMaterial({ color: WALL_COLOR, roughness: 0.5 }));
-  addMergedMesh(group, coverGeometries, new THREE.MeshStandardMaterial({ color: COVER_COLOR, roughness: 0.4 }));
-  addMergedMesh(group, rampGeometries, new THREE.MeshStandardMaterial({ color: RAMP_COLOR, roughness: 0.6 }));
+  addMergedMesh(
+    group,
+    floorGeometries,
+    new THREE.MeshStandardMaterial({ color: FLOOR_COLOR, roughness: 0.8 })
+  );
+  addMergedMesh(
+    group,
+    wallGeometries,
+    new THREE.MeshStandardMaterial({ color: WALL_COLOR, roughness: 0.5 })
+  );
+  addMergedMesh(
+    group,
+    coverGeometries,
+    new THREE.MeshStandardMaterial({ color: COVER_COLOR, roughness: 0.4 })
+  );
+  addMergedMesh(
+    group,
+    rampGeometries,
+    new THREE.MeshStandardMaterial({ color: RAMP_COLOR, roughness: 0.6 })
+  );
 
   return group;
 }
@@ -88,6 +107,7 @@ function addWallsForCell({
   wallThickness,
   wallHeight,
   cellSize,
+  baseElevation,
   wallGeometries
 }) {
   const directions = [
@@ -132,9 +152,67 @@ function addWallsForCell({
       dir.size[1],
       dir.size[2]
     );
-    wall.translate(wx + dir.offset[0], dir.offset[1], wz + dir.offset[2]);
+    wall.translate(
+      wx + dir.offset[0],
+      baseElevation + dir.offset[1],
+      wz + dir.offset[2]
+    );
     wallGeometries.push(wall);
   }
+}
+
+function createRampGeometry(cellSize, wallHeight) {
+  const halfWidth = cellSize / 2;
+  const halfDepth = cellSize / 2;
+  const h = wallHeight;
+
+  const positions = new Float32Array([
+    // Bottom
+    -halfWidth, 0, -halfDepth,
+    halfWidth, 0, -halfDepth,
+    halfWidth, 0, halfDepth,
+
+    -halfWidth, 0, -halfDepth,
+    halfWidth, 0, halfDepth,
+    -halfWidth, 0, halfDepth,
+
+    // Back vertical
+    -halfWidth, 0, halfDepth,
+    halfWidth, 0, halfDepth,
+    halfWidth, h, halfDepth,
+
+    -halfWidth, 0, halfDepth,
+    halfWidth, h, halfDepth,
+    -halfWidth, h, halfDepth,
+
+    // Left triangle
+    -halfWidth, 0, -halfDepth,
+    -halfWidth, 0, halfDepth,
+    -halfWidth, h, halfDepth,
+
+    // Right triangle
+    halfWidth, 0, -halfDepth,
+    halfWidth, h, halfDepth,
+    halfWidth, 0, halfDepth,
+
+    // Slope
+    -halfWidth, h, halfDepth,
+    halfWidth, h, halfDepth,
+    halfWidth, 0, -halfDepth,
+
+    -halfWidth, h, halfDepth,
+    halfWidth, 0, -halfDepth,
+    -halfWidth, 0, -halfDepth
+  ]);
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(positions, 3)
+  );
+  geometry.computeVertexNormals();
+
+  return geometry;
 }
 
 function addMergedMesh(group, geometries, material) {
