@@ -6,6 +6,7 @@ import { createControlsPanel } from "./ui/gui.js";
 import { generateArenaLayout } from "./generation/arenaGenerator.js";
 import { buildBlockoutGroup } from "./geometry/blockoutBuilder.js";
 import { disposeHierarchy } from "./utils/dispose.js";
+import { exportBlockoutOBJ } from "./utils/exporter.js";
 
 const DEFAULT_PARAMS = {
   seed: "1337",
@@ -74,7 +75,23 @@ export function initApp(container) {
       seedController?.updateDisplay();
       rebuildArena(state);
     },
-    onRegenerate: () => rebuildArena(state)
+    onRegenerate: () => rebuildArena(state),
+    onExport: () => {
+      if (!state.currentArena) {
+        return;
+      }
+
+      const filename = [
+        "arena",
+        params.type?.toLowerCase().replace(/\s+/g, "-") ?? "layout",
+        params.seed
+      ]
+        .filter(Boolean)
+        .join("_")
+        .concat(".obj");
+
+      exportBlockoutOBJ(state.currentArena, filename);
+    }
   });
   seedController = controlsPanel.seedController;
 

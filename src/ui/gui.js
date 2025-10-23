@@ -77,6 +77,14 @@ export function createControlsPanel(params, callbacks) {
       "rollSeed"
     )
     .name("Roll Seed");
+  actionFolder
+    .add(
+      {
+        export: () => callbacks.onExport?.()
+      },
+      "export"
+    )
+    .name("Export");
 
   return {
     gui,
