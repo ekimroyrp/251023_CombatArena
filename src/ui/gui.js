@@ -58,6 +58,10 @@ export function createControlsPanel(params, callbacks) {
     .add(params, "wallHeight", 3, 12, 0.5)
     .name("Wall Height")
     .onFinishChange(callbacks.onChange);
+  propsFolder
+    .add(params, "platforms", 0, 6, 1)
+    .name("Platforms")
+    .onFinishChange(callbacks.onChange);
   propsFolder.open();
 
   const actionFolder = gui.addFolder("Actions");

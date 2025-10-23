@@ -1,5 +1,5 @@
 import { getCorridorPath } from "./corridors.js";
-import { createRng, randomInt, shuffleInPlace } from "../utils/random.js";
+import { createRng, randomFloat, randomInt, shuffleInPlace } from "../utils/random.js";
 
 const STYLE_PROFILES = {
   Halo: {
@@ -63,6 +63,7 @@ export function generateArenaLayout(options) {
 
     connectRooms(grid, rooms, config, levelRng);
     sprinkleCover(grid, config, levelRng);
+    const platformCount = buildPlatforms(grid, config, levelRng);
 
     levels.push({
       index: levelIndex,
@@ -70,7 +71,8 @@ export function generateArenaLayout(options) {
       width: config.width,
       height: config.height,
       grid,
-      rooms
+      rooms,
+      platformCount
     });
   }
 
@@ -106,6 +108,13 @@ function normalizeOptions(options) {
     8
   );
 
+  const basePlatforms = clamp(Math.floor(options.platforms ?? 0), 0, 12);
+  const platformsPerFloor = clamp(
+    Math.round(basePlatforms * (styleProfile.verticality ?? 1)),
+    0,
+    12
+  );
+
   const coverProbability = clamp01(
     (options.coverProbability ?? 0.1) * (styleProfile.coverBias ?? 1)
   );
@@ -125,6 +134,7 @@ function normalizeOptions(options) {
     cellSize: clamp(options.cellSize ?? 4, 1, 10),
     rooms,
     floors,
+    platformsPerFloor,
     maxRoomSize: Math.min(maxRoomSize, width - 2, height - 2),
     corridorStyle,
     styleCorridor: styleProfile.corridorStyle ?? corridorStyle,
@@ -147,7 +157,8 @@ function createGrid(width, height) {
       solid: true,
       cover: false,
       rampUp: false,
-      rampDown: false
+      rampDown: false,
+      platformId: null
     }))
   );
 }
@@ -382,6 +393,170 @@ function sprinkleCover(grid, config, rng) {
       cell.cover = rng() < config.coverProbability;
     }
   }
+}
+
+function buildPlatforms(grid, config, rng) {
+  const targetPlatforms = config.platformsPerFloor;
+  if (!targetPlatforms) {
+    return 0;
+  }
+
+  let built = 0;
+  let attempts = 0;
+  const maxAttempts = targetPlatforms * 5;
+
+  while (built < targetPlatforms && attempts < maxAttempts) {
+    attempts += 1;
+    const seed = pickPlatformSeed(grid, rng);
+    if (!seed) {
+      break;
+    }
+
+    const platformId = built;
+    const platformSize = determinePlatformSize(grid, config, rng);
+    const carved = growPlatformFromSeed(grid, seed, platformId, platformSize, rng);
+
+    if (carved > 0) {
+      built += 1;
+    }
+  }
+
+  return built;
+}
+
+function determinePlatformSize(grid, config, rng) {
+  const area = grid.length * grid[0].length;
+  const maxRoom = config.maxRoomSize;
+  const minCells = Math.max(3, Math.round(maxRoom * 0.35));
+  const maxCells = Math.max(minCells + 2, Math.round(maxRoom * 1.4));
+  const raw = randomFloat(rng, minCells, maxCells);
+  return Math.min(Math.round(raw), Math.floor(area * 0.25));
+}
+
+function pickPlatformSeed(grid, rng) {
+  const width = grid[0].length;
+  const height = grid.length;
+  const edgeCandidates = [];
+  const fallbacks = [];
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const cell = grid[y][x];
+      if (cell.solid || cell.platformId !== null) {
+        continue;
+      }
+      const edgeScore = countEdgeScore(grid, x, y);
+      const candidate = { x, y, weight: edgeScore + 1 };
+      if (edgeScore >= 2) {
+        edgeCandidates.push(candidate);
+      } else if (edgeScore >= 1) {
+        fallbacks.push(candidate);
+      }
+    }
+  }
+
+  const pool =
+    edgeCandidates.length > 0
+      ? edgeCandidates
+      : fallbacks.length > 0
+      ? fallbacks
+      : null;
+
+  if (!pool || pool.length === 0) {
+    return null;
+  }
+
+  const totalWeight = pool.reduce((sum, candidate) => sum + candidate.weight, 0);
+  let threshold = rng() * totalWeight;
+
+  for (const candidate of pool) {
+    threshold -= candidate.weight;
+    if (threshold <= 0) {
+      return { x: candidate.x, y: candidate.y };
+    }
+  }
+
+  return { x: pool[0].x, y: pool[0].y };
+}
+
+function growPlatformFromSeed(grid, seed, platformId, targetSize, rng) {
+  const width = grid[0].length;
+  const height = grid.length;
+  const queue = [{ x: seed.x, y: seed.y }];
+  const carved = [];
+  const visited = new Set();
+  const minAcceptable = Math.max(3, Math.floor(targetSize * 0.5));
+
+  while (queue.length > 0 && carved.length < targetSize) {
+    const index = Math.floor(rng() * queue.length);
+    const current = queue.splice(index, 1)[0];
+    const key = `${current.x},${current.y}`;
+
+    if (visited.has(key)) {
+      continue;
+    }
+    visited.add(key);
+
+    if (!insideBounds(grid, current.x, current.y)) {
+      continue;
+    }
+
+    const cell = grid[current.y][current.x];
+    if (cell.solid || cell.platformId !== null) {
+      continue;
+    }
+
+    cell.platformId = platformId;
+    cell.cover = false;
+    carved.push({ x: current.x, y: current.y });
+
+    const neighbors = getNeighbors4(current.x, current.y, width, height)
+      .filter(({ x, y }) => {
+        const neighbor = grid[y][x];
+        return !neighbor.solid && neighbor.platformId === null;
+      })
+      .sort(
+        (a, b) => countEdgeScore(grid, b.x, b.y) - countEdgeScore(grid, a.x, a.y)
+      );
+
+    queue.push(...neighbors);
+  }
+
+  if (carved.length < minAcceptable) {
+    for (const cell of carved) {
+      grid[cell.y][cell.x].platformId = null;
+    }
+    return 0;
+  }
+
+  return carved.length;
+}
+
+function countEdgeScore(grid, x, y) {
+  const offsets = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1]
+  ];
+  let score = 0;
+  for (const [dx, dy] of offsets) {
+    const nx = x + dx;
+    const ny = y + dy;
+    if (!insideBounds(grid, nx, ny) || grid[ny][nx].solid) {
+      score += 1;
+    }
+  }
+  return score;
+}
+
+function getNeighbors4(x, y, width, height) {
+  const neighbors = [];
+  if (x > 0) neighbors.push({ x: x - 1, y });
+  if (x < width - 1) neighbors.push({ x: x + 1, y });
+  if (y > 0) neighbors.push({ x, y: y - 1 });
+  if (y < height - 1) neighbors.push({ x, y: y + 1 });
+  return neighbors;
 }
 
 function linkFloorsWithRamps(levels, config) {

@@ -20,7 +20,8 @@ const DEFAULT_PARAMS = {
   corridorStyle: "L",
   coverProbability: 0.1,
   rampProbability: 0.05,
-  wallHeight: 6
+  wallHeight: 6,
+  platforms: 0
 };
 
 export function initApp(container) {

@@ -6,6 +6,7 @@ Procedural FPS arena blockout generator built with Three.js. The tool carves a g
 - Adjustable grid dimensions, room density, and room size caps for shaping the arena.
 - Style presets (Halo, Counter Strike 2, Quake) that bias room density, verticality, ramps, and corridor flow to echo those franchises while still honoring your sliders.
 - Stackable floor levels with a dedicated slider; each level is generated from its own seeded layout so upper decks can fully or partially cover the floor below.
+- Per-floor platform slider to sprinkle mid-height mezzanines that hug room boundaries at half wall height.
 - Multiple corridor routing modes (L-shape, Manhattan walk, Bresenham line) to experiment with different flow patterns.
 - Seeded random generation so layouts can be reproduced or rolled at will.
 - Cover probability slider plus ramp probability to control inter-floor connectors.
@@ -20,7 +21,7 @@ Procedural FPS arena blockout generator built with Three.js. The tool carves a g
 ## Getting Started
 1. Install dependencies once: `npm install`
 2. Launch the playground: `npm run dev`
-3. Use the on-screen GUI to pick an arena **Type**, tweak seed, grid size, floor count, corridors, and prop spawn rates. Press **Roll Seed** to quickly try new layouts with the current settings.
-4. Once happy with a layout press **Export (.obj)** in the Actions panel to download the merged blockout mesh.
+3. Use the on-screen GUI to pick an arena **Type**, tweak seed, grid size, floor count, platforms, corridors, and prop spawn rates. Press **Roll Seed** to quickly try new layouts with the current settings.
+4. Once happy with a layout press **Export** in the Actions panel to download the merged blockout mesh.
 
 When ready to explore alternative corridor carving approaches, open `src/generation/corridors.js` to add additional strategies (e.g., A*).
