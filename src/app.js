@@ -23,7 +23,8 @@ const DEFAULT_PARAMS = {
   rampProbability: 0.05,
   wallHeight: 6,
   platforms: 0,
-  platformSeed: 0
+  platformSeed: 0,
+  symmetry: "None"
 };
 
 export function initApp(container) {

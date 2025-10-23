@@ -80,6 +80,7 @@ export function generateArenaLayout(options) {
   }
 
   linkFloorsWithRamps(levels, config);
+  applySymmetry(levels, config);
 
   return {
     cellSize: config.cellSize,
@@ -111,6 +112,10 @@ function normalizeOptions(options) {
     8
   );
 
+  const symmetryRaw = String(options.symmetry ?? "None").toUpperCase();
+  const allowedSym = new Set(["NONE", "X", "Y", "XY"]);
+  const symmetry = allowedSym.has(symmetryRaw) ? symmetryRaw : "NONE";
+
   const platformSeed = clamp(Math.floor(options.platformSeed ?? 0), 0, 999);
   const basePlatforms = clamp(Math.floor(options.platforms ?? 0), 0, 20);
   const platformsPerFloor = clamp(
@@ -140,6 +145,7 @@ function normalizeOptions(options) {
     floors,
     platformsPerFloor,
     platformSeed,
+    symmetry,
     maxRoomSize: Math.min(maxRoomSize, width - 2, height - 2),
     corridorStyle,
     styleCorridor: styleProfile.corridorStyle ?? corridorStyle,
@@ -613,6 +619,88 @@ function linkFloorsWithRamps(levels, config) {
       upper.grid[cell.y][cell.x].rampDown = true;
     }
   }
+}
+
+function applySymmetry(levels, config) {
+  if (!levels.length || config.symmetry === "NONE") {
+    return;
+  }
+
+  const applyX = config.symmetry === "X" || config.symmetry === "XY";
+  const applyY = config.symmetry === "Y" || config.symmetry === "XY";
+
+  for (const level of levels) {
+    if (applyX) {
+      mirrorHorizontal(level.grid);
+    }
+    if (applyY) {
+      mirrorVertical(level.grid);
+    }
+  }
+}
+
+function mirrorHorizontal(grid) {
+  const height = grid.length;
+  const width = grid[0].length;
+  const original = grid.map((row) => row.map((cell) => cloneCell(cell)));
+  const limit = Math.ceil(height / 2);
+
+  for (let y = 0; y < limit; y += 1) {
+    const mirrorY = height - 1 - y;
+    for (let x = 0; x < width; x += 1) {
+      const combined = combineCells(original[y][x], original[mirrorY][x]);
+      grid[y][x] = combined;
+
+      if (mirrorY !== y) {
+        grid[mirrorY][x] = cloneCell(combined);
+      }
+    }
+  }
+}
+
+function mirrorVertical(grid) {
+  const height = grid.length;
+  const width = grid[0].length;
+  const original = grid.map((row) => row.map((cell) => cloneCell(cell)));
+  const limit = Math.ceil(width / 2);
+
+  for (let x = 0; x < limit; x += 1) {
+    const mirrorX = width - 1 - x;
+    for (let y = 0; y < height; y += 1) {
+      const combined = combineCells(original[y][x], original[y][mirrorX]);
+      grid[y][x] = combined;
+
+      if (mirrorX !== x) {
+        grid[y][mirrorX] = cloneCell(combined);
+      }
+    }
+  }
+}
+
+function cloneCell(cell) {
+  return {
+    solid: cell.solid,
+    cover: cell.cover,
+    rampUp: cell.rampUp,
+    rampDown: cell.rampDown,
+    platformId: cell.platformId
+  };
+}
+
+function combineCells(a, b) {
+  const solid = a.solid && b.solid;
+  const cover = !solid && (a.cover || b.cover);
+  const rampUp = !solid && (a.rampUp || b.rampUp);
+  const rampDown = !solid && (a.rampDown || b.rampDown);
+  const platformId = solid ? null : a.platformId ?? b.platformId;
+
+  return {
+    solid,
+    cover,
+    rampUp,
+    rampDown,
+    platformId
+  };
 }
 
 function insideBounds(grid, x, y) {

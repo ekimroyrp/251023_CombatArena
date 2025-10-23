@@ -2,6 +2,7 @@ import GUI from "lil-gui";
 
 export const TYPE_OPTIONS = ["Halo", "Counter Strike 2", "Quake"];
 export const CORRIDOR_OPTIONS = ["L", "Manhattan", "Bresenham"];
+export const SYMMETRY_OPTIONS = ["None", "X", "Y", "XY"];
 
 export function createControlsPanel(params, callbacks) {
   const gui = new GUI();
@@ -54,6 +55,10 @@ export function createControlsPanel(params, callbacks) {
   layoutFolder
     .add(params, "platformSeed", 0, 999, 1)
     .name("Platform Seed")
+    .onFinishChange(callbacks.onChange);
+  layoutFolder
+    .add(params, "symmetry", SYMMETRY_OPTIONS)
+    .name("Symmetry")
     .onFinishChange(callbacks.onChange);
   layoutFolder.open();
 

@@ -13,6 +13,7 @@ Procedural FPS arena blockout generator built with Three.js. The tool carves a g
 - One-click OBJ export from the Actions panel for bringing blockouts into DCC tools or other engines.
 - Merged floor, wall, cover, and ramp meshes to keep draw calls low while iterating.
 - Houdini-style infinite ground grid that respects the cell size and fades with distance for orientation.
+- Optional X/Y/XY symmetry passes that clone the finished layout (floors, props, ramps, platforms) without seams.
 
 ## Scripts
 - `npm run dev` - start Vite with hot reload.
@@ -22,7 +23,7 @@ Procedural FPS arena blockout generator built with Three.js. The tool carves a g
 ## Getting Started
 1. Install dependencies once: `npm install`
 2. Launch the playground: `npm run dev`
-3. Use the on-screen GUI to pick an arena **Type**, tweak seed, grid size, floor count, platforms, platform seed, corridors, and prop spawn rates. Press **Roll Seed** to quickly try new layouts with the current settings.
+3. Use the on-screen GUI to pick an arena **Type**, tweak seed, grid size, floor count, platforms, platform seed, symmetry, corridors, and prop spawn rates. Press **Roll Seed** to quickly try new layouts with the current settings.
 4. Once happy with a layout press **Export** in the Actions panel to download the merged blockout mesh.
 
 When ready to explore alternative corridor carving approaches, open `src/generation/corridors.js` to add additional strategies (e.g., A*).
