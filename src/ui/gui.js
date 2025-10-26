@@ -7,7 +7,7 @@ export const SYMMETRY_OPTIONS = ["None", "X", "Y", "XY"];
 export function createControlsPanel(params, callbacks) {
   const gui = new GUI();
 
-  const layoutFolder = gui.addFolder("Layout");
+  const layoutFolder = gui.addFolder("Plan");
   layoutFolder
     .add(params, "type", TYPE_OPTIONS)
     .name("Type")
@@ -17,50 +17,62 @@ export function createControlsPanel(params, callbacks) {
     .name("Seed")
     .onFinishChange(callbacks.onChange);
   layoutFolder
+    .add(params, "cellSize", 2, 8, 0.5)
+    .name("Cell Size")
+    .onFinishChange(callbacks.onChange);
+  layoutFolder
     .add(params, "gridWidth", 8, 64, 1)
     .name("Grid Width")
     .onFinishChange(callbacks.onChange);
   layoutFolder
     .add(params, "gridHeight", 8, 64, 1)
-    .name("Grid Height")
-    .onFinishChange(callbacks.onChange);
-  layoutFolder
-    .add(params, "cellSize", 2, 8, 0.5)
-    .name("Cell Size")
-    .onFinishChange(callbacks.onChange);
-  layoutFolder
-    .add(params, "floors", 1, 5, 1)
-    .name("Floors")
-    .onFinishChange(callbacks.onChange);
-  layoutFolder
-    .add(params, "rooms", 4, 48, 1)
-    .name("Rooms")
-    .onFinishChange(callbacks.onChange);
-  layoutFolder
-    .add(params, "maxRoomSize", 4, 18, 1)
-    .name("Max Room")
-    .onFinishChange(callbacks.onChange);
-  layoutFolder
-    .add(params, "corridorStyle", CORRIDOR_OPTIONS)
-    .name("Corridor")
-    .onFinishChange(callbacks.onChange);
-  layoutFolder
-    .add(params, "wallHeight", 3, 12, 0.5)
-    .name("Wall Height")
-    .onFinishChange(callbacks.onChange);
-  layoutFolder
-    .add(params, "platforms", 0, 10, 1)
-    .name("Platforms")
-    .onFinishChange(callbacks.onChange);
-  layoutFolder
-    .add(params, "platformSeed", 0, 999, 1)
-    .name("Platform Seed")
+    .name("Grid Length")
     .onFinishChange(callbacks.onChange);
   layoutFolder
     .add(params, "symmetry", SYMMETRY_OPTIONS)
     .name("Symmetry")
     .onFinishChange(callbacks.onChange);
   layoutFolder.open();
+
+  const roomsFolder = gui.addFolder("Rooms");
+  roomsFolder
+    .add(params, "rooms", 4, 48, 1)
+    .name("Rooms")
+    .onFinishChange(callbacks.onChange);
+  roomsFolder
+    .add(params, "maxRoomSize", 4, 18, 1)
+    .name("Max Room")
+    .onFinishChange(callbacks.onChange);
+  roomsFolder.open();
+
+  const corridorsFolder = gui.addFolder("Corridors");
+  corridorsFolder
+    .add(params, "corridorStyle", CORRIDOR_OPTIONS)
+    .name("Style")
+    .onFinishChange(callbacks.onChange);
+  corridorsFolder.open();
+
+  const platformsFolder = gui.addFolder("Platforms");
+  platformsFolder
+    .add(params, "platforms", 0, 10, 1)
+    .name("Count")
+    .onFinishChange(callbacks.onChange);
+  platformsFolder
+    .add(params, "platformSeed", 0, 999, 1)
+    .name("Seed")
+    .onFinishChange(callbacks.onChange);
+  platformsFolder.open();
+
+  const elevationFolder = gui.addFolder("Elevation");
+  elevationFolder
+    .add(params, "wallHeight", 3, 12, 0.5)
+    .name("Wall Height")
+    .onFinishChange(callbacks.onChange);
+  elevationFolder
+    .add(params, "floors", 1, 5, 1)
+    .name("Floors")
+    .onFinishChange(callbacks.onChange);
+  elevationFolder.open();
 
   const propsFolder = gui.addFolder("Props");
   propsFolder
