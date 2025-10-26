@@ -28,7 +28,8 @@ const DEFAULT_PARAMS = {
   floorColor: "#3a3f47",
   wallColor: "#1f252c",
   platformColor: "#d8dce1",
-  coverColor: "#4f5864"
+  coverColor: "#4f5864",
+  backgroundColor: "#6b6d6f"
 };
 
 export function initApp(container) {
@@ -114,6 +115,7 @@ function rebuildArena(state) {
     coverColor: state.params.coverColor
   });
   updateGroundGrid(state.groundGrid, layout.cellSize);
+  state.scene.background.set(state.params.backgroundColor);
 
   if (state.currentArena) {
     disposeHierarchy(state.currentArena);
