@@ -10,7 +10,7 @@ import { disposeHierarchy } from "./utils/dispose.js";
 import { exportBlockoutOBJ } from "./utils/exporter.js";
 
 const DEFAULT_PARAMS = {
-  seed: "1337",
+  seed: 1,
   type: "Halo",
   gridWidth: 32,
   gridHeight: 24,
@@ -76,12 +76,6 @@ export function initApp(container) {
 
   const controlsPanel = createControlsPanel(params, {
     onChange: () => rebuildArena(state),
-    onRollSeed: () => {
-      params.seed = Math.floor(Math.random() * 1_000_000).toString();
-      seedController?.updateDisplay();
-      rebuildArena(state);
-    },
-    onRegenerate: () => rebuildArena(state),
     onExport: () => {
       if (!state.currentArena) {
         return;

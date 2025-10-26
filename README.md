@@ -23,7 +23,7 @@ Procedural FPS arena blockout generator built with Three.js. The tool carves a g
 ## Getting Started
 1. Install dependencies once: `npm install`
 2. Launch the playground: `npm run dev`
-3. Use the on-screen GUI to pick an arena **Type**, tweak seed, grid size, floor count, platforms, platform seed, symmetry, corridors, and prop spawn rates. Press **Roll Seed** to quickly try new layouts with the current settings.
+3. Use the on-screen GUI to pick an arena **Type**, adjust the seed slider (1–1000), tweak grid size, floor count, platforms, platform seed, symmetry, corridors, and prop spawn rates to explore layouts.
 4. Once happy with a layout press **Export** in the Actions panel to download the merged blockout mesh.
 
 When ready to explore alternative corridor carving approaches, open `src/generation/corridors.js` to add additional strategies (e.g., A*).

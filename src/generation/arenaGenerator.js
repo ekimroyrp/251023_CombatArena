@@ -116,6 +116,7 @@ function normalizeOptions(options) {
   const allowedSym = new Set(["NONE", "X", "Y", "XY"]);
   const symmetry = allowedSym.has(symmetryRaw) ? symmetryRaw : "NONE";
 
+  const rawSeed = clamp(Math.floor(options.seed ?? 0), 1, 1000);
   const platformSeed = clamp(Math.floor(options.platformSeed ?? 0), 0, 999);
   const basePlatforms = clamp(Math.floor(options.platforms ?? 0), 0, 20);
   const platformsPerFloor = clamp(
@@ -135,7 +136,7 @@ function normalizeOptions(options) {
     options.corridorStyle ?? styleProfile.corridorStyle ?? "L";
 
   return {
-    seed: options.seed ?? "0",
+    seed: String(rawSeed),
     type,
     styleProfile,
     width,

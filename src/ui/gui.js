@@ -13,7 +13,7 @@ export function createControlsPanel(params, callbacks) {
     .name("Type")
     .onFinishChange(callbacks.onChange);
   const seedController = layoutFolder
-    .add(params, "seed")
+    .add(params, "seed", 1, 1000, 1)
     .name("Seed")
     .onFinishChange(callbacks.onChange);
   layoutFolder
@@ -74,22 +74,6 @@ export function createControlsPanel(params, callbacks) {
   propsFolder.open();
 
   const actionFolder = gui.addFolder("Actions");
-  actionFolder
-    .add(
-      {
-        regenerate: () => callbacks.onRegenerate?.()
-      },
-      "regenerate"
-    )
-    .name("Regenerate");
-  actionFolder
-    .add(
-      {
-        rollSeed: () => callbacks.onRollSeed?.()
-      },
-      "rollSeed"
-    )
-    .name("Roll Seed");
   actionFolder
     .add(
       {
