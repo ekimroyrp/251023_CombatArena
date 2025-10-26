@@ -29,7 +29,8 @@ const DEFAULT_PARAMS = {
   wallColor: "#1f252c",
   platformColor: "#d8dce1",
   coverColor: "#4f5864",
-  backgroundColor: "#6b6d6f"
+  backgroundColor: "#6b6d6f",
+  gridColor: "#d0d4da"
 };
 
 export function initApp(container) {
@@ -75,7 +76,7 @@ export function initApp(container) {
     stats,
     params,
     currentArena: null,
-    groundGrid: createGroundGrid(params.cellSize)
+    groundGrid: createGroundGrid(params.cellSize, params.gridColor)
   };
   state.scene.add(state.groundGrid.mesh);
 
@@ -114,7 +115,7 @@ function rebuildArena(state) {
     platformColor: state.params.platformColor,
     coverColor: state.params.coverColor
   });
-  updateGroundGrid(state.groundGrid, layout.cellSize);
+  updateGroundGrid(state.groundGrid, layout.cellSize, state.params.gridColor);
   state.scene.background.set(state.params.backgroundColor);
 
   if (state.currentArena) {

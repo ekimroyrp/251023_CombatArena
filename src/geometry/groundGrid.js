@@ -1,17 +1,16 @@
 import * as THREE from "three";
 
 const GRID_EXTENT = 4000;
-const GRID_COLOR = new THREE.Color(0xd0d4da);
 const FADE_STRENGTH = 0.01;
 const LINE_ALPHA = 0.55;
 
-export function createGroundGrid(initialCellSize) {
+export function createGroundGrid(initialCellSize, color = "#d0d4da") {
   const geometry = new THREE.PlaneGeometry(GRID_EXTENT, GRID_EXTENT, 1, 1);
   geometry.rotateX(-Math.PI / 2);
 
   const uniforms = {
     uCellSize: { value: Math.max(0.001, initialCellSize) },
-    uGridColor: { value: GRID_COLOR.clone() },
+    uGridColor: { value: new THREE.Color(color) },
     uFadeStrength: { value: FADE_STRENGTH },
     uLineAlpha: { value: LINE_ALPHA }
   };
@@ -69,9 +68,12 @@ export function createGroundGrid(initialCellSize) {
   };
 }
 
-export function updateGroundGrid(grid, cellSize) {
+export function updateGroundGrid(grid, cellSize, color) {
   if (!grid) {
     return;
   }
   grid.uniforms.uCellSize.value = Math.max(0.001, cellSize);
+  if (grid.uniforms.uGridColor) {
+    grid.uniforms.uGridColor.value.set(color ?? "#d0d4da");
+  }
 }
