@@ -1,13 +1,12 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
-const FLOOR_COLOR = 0x3a3f47;
 const WALL_COLOR = 0x1f252c;
 const COVER_COLOR = 0x4f5864;
 const PLATFORM_COLOR = 0xd8dce1;
 const RAMP_COLOR = 0x5a664f;
 
-export function buildBlockoutGroup(layout) {
+export function buildBlockoutGroup(layout, colors = {}) {
   const group = new THREE.Group();
   group.name = "ArenaBlockout";
 
@@ -18,6 +17,7 @@ export function buildBlockoutGroup(layout) {
   const rampGeometries = [];
 
   const { cellSize, wallHeight, floorThickness, levels } = layout;
+  const floorColor = new THREE.Color(colors.floorColor ?? 0x3a3f47);
 
   const wallThickness = Math.max(0.4, cellSize * 0.2);
 
@@ -89,7 +89,7 @@ export function buildBlockoutGroup(layout) {
   addMergedMesh(
     group,
     floorGeometries,
-    new THREE.MeshStandardMaterial({ color: FLOOR_COLOR, roughness: 0.8 })
+    new THREE.MeshStandardMaterial({ color: floorColor, roughness: 0.8 })
   );
   addMergedMesh(
     group,

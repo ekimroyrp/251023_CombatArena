@@ -24,7 +24,8 @@ const DEFAULT_PARAMS = {
   wallHeight: 6,
   platforms: 0,
   platformSeed: 0,
-  symmetry: "None"
+  symmetry: "None",
+  floorColor: "#3a3f47"
 };
 
 export function initApp(container) {
@@ -103,7 +104,9 @@ export function initApp(container) {
 
 function rebuildArena(state) {
   const layout = generateArenaLayout(state.params);
-  const blockout = buildBlockoutGroup(layout);
+  const blockout = buildBlockoutGroup(layout, {
+    floorColor: state.params.floorColor
+  });
   updateGroundGrid(state.groundGrid, layout.cellSize);
 
   if (state.currentArena) {

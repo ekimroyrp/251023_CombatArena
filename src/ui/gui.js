@@ -85,6 +85,13 @@ export function createControlsPanel(params, callbacks) {
     .onFinishChange(callbacks.onChange);
   propsFolder.open();
 
+  const displayFolder = gui.addFolder("Display");
+  displayFolder
+    .addColor(params, "floorColor")
+    .name("Floor Color")
+    .onFinishChange(callbacks.onChange);
+  displayFolder.open();
+
   const actionFolder = gui.addFolder("Actions");
   actionFolder
     .add(
