@@ -94,6 +94,10 @@ export function createControlsPanel(params, callbacks) {
     .addColor(params, "wallColor")
     .name("Wall Color")
     .onFinishChange(callbacks.onChange);
+  displayFolder
+    .addColor(params, "platformColor")
+    .name("Platform Color")
+    .onFinishChange(callbacks.onChange);
   displayFolder.open();
 
   const actionFolder = gui.addFolder("Actions");

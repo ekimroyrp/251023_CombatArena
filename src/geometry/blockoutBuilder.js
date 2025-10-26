@@ -18,6 +18,7 @@ export function buildBlockoutGroup(layout, colors = {}) {
   const { cellSize, wallHeight, floorThickness, levels } = layout;
   const floorColor = new THREE.Color(colors.floorColor ?? 0x3a3f47);
   const wallColor = new THREE.Color(colors.wallColor ?? 0x1f252c);
+  const platformColor = new THREE.Color(colors.platformColor ?? PLATFORM_COLOR);
 
   const wallThickness = Math.max(0.4, cellSize * 0.2);
 
@@ -104,7 +105,7 @@ export function buildBlockoutGroup(layout, colors = {}) {
   addMergedMesh(
     group,
     platformGeometries,
-    new THREE.MeshStandardMaterial({ color: PLATFORM_COLOR, roughness: 0.5 })
+    new THREE.MeshStandardMaterial({ color: platformColor, roughness: 0.5 })
   );
   addMergedMesh(
     group,
