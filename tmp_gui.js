@@ -36,12 +36,12 @@ export function createControlsPanel(params, callbacks) {
 
   const roomsFolder = gui.addFolder("Rooms");
   roomsFolder
-    .add(params, "rooms", 4, 48, 1)
-    .name("Rooms")
+    .add(params, "rooms", 1, 100, 1)
+    .name("Room Amount")
     .onFinishChange(callbacks.onChange);
   roomsFolder
-    .add(params, "maxRoomSize", 4, 18, 1)
-    .name("Max Room")
+    .add(params, "maxRoomSize", 1, 100, 1)
+    .name("Room Size")
     .onFinishChange(callbacks.onChange);
   roomsFolder.open();
 
