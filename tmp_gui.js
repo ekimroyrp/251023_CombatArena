@@ -1,7 +1,7 @@
 import GUI from "lil-gui";
 
 export const TYPE_OPTIONS = ["Halo", "Counter Strike 2", "Quake"];
-export const CORRIDOR_OPTIONS = ["L", "Manhattan", "Bresenham"];
+export const CORRIDOR_OPTIONS = ["L", "Manhattan", "Bresenham", "Spiral", "Radial"];
 export const SYMMETRY_OPTIONS = ["None", "X", "Y", "XY"];
 
 const GUI_FOLDER_STYLE_ID = "combat-arena-gui-folder-style";

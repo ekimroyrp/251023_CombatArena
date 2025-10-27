@@ -1,7 +1,9 @@
 export const CORRIDOR_STRATEGIES = {
   L: generateLPath,
   Manhattan: generateManhattanPath,
-  Bresenham: generateBresenhamPath
+  Bresenham: generateBresenhamPath,
+  Spiral: generateSpiralPath,
+  Radial: generateRadialPath
 };
 
 export function getCorridorPath(style, from, to, rng) {
@@ -86,6 +88,81 @@ function generateBresenhamPath(from, to) {
   return path;
 }
 
+function generateSpiralPath(from, to, rng) {
+  const corePath = generateManhattanPath(from, to, rng);
+  if (corePath.length <= 2) {
+    return corePath;
+  }
+
+  const path = [{ ...corePath[0] }];
+  const baseDistance = Math.max(
+    Math.abs(to.x - from.x),
+    Math.abs(to.y - from.y)
+  );
+  const maxRadius = Math.max(1, Math.min(6, Math.ceil(baseDistance / 2)));
+
+  let radius = 1;
+  let twistDir = rng() > 0.5 ? 1 : -1;
+
+  for (let i = 1; i < corePath.length; i += 1) {
+    const prev = corePath[i - 1];
+    const current = corePath[i];
+    const dx = current.x - prev.x;
+    const dy = current.y - prev.y;
+    const offsetMagnitude = Math.max(1, Math.min(maxRadius, radius));
+    const offset = offsetMagnitude * twistDir;
+
+    if (dx !== 0) {
+      const sideY = prev.y + offset;
+      walkAxis(path, false, prev.y, sideY, prev.x);
+      walkAxis(path, true, prev.x, current.x, sideY);
+      walkAxis(path, false, sideY, current.y, current.x);
+    } else {
+      const sideX = prev.x + offset;
+      walkAxis(path, true, prev.x, sideX, prev.y);
+      walkAxis(path, false, prev.y, current.y, sideX);
+      walkAxis(path, true, sideX, current.x, current.y);
+    }
+
+    const last = path[path.length - 1];
+    if (last.x !== current.x || last.y !== current.y) {
+      path.push({ ...current });
+    }
+
+    if (i % 2 === 0) {
+      radius += 1;
+      twistDir = -twistDir;
+    }
+  }
+
+  return dedupePath(path);
+}
+
+function generateRadialPath(from, to, rng) {
+  const corePath = [];
+  const hub = {
+    x: Math.round((from.x + to.x) / 2),
+    y: Math.round((from.y + to.y) / 2)
+  };
+
+  const spread = 2 + Math.floor(rng() * 3); // 2-4
+  hub.x += randomOffset(spread, rng);
+  hub.y += randomOffset(spread, rng);
+
+  if (hub.x === from.x && hub.y === from.y) {
+    hub.x += from.x === to.x ? (rng() > 0.5 ? 1 : -1) : Math.sign(to.x - from.x);
+  }
+  if (hub.x === to.x && hub.y === to.y) {
+    hub.y += to.y === from.y ? (rng() > 0.5 ? 1 : -1) : Math.sign(from.y - to.y);
+  }
+
+  corePath.push(...generateManhattanPath(from, hub, rng));
+  const tail = generateManhattanPath(hub, to, rng);
+  corePath.push(...tail.slice(1));
+
+  return dedupePath(corePath);
+}
+
 function walkAxis(path, isHorizontal, fromValue, toValue, fixed) {
   if (fromValue === toValue) {
     return;
@@ -114,4 +191,15 @@ function dedupePath(path) {
     }
   }
   return result;
+}
+
+function randomOffset(max, rng) {
+  if (max <= 0) {
+    return 0;
+  }
+  const magnitude = Math.floor(rng() * (max + 1));
+  if (magnitude === 0) {
+    return 0;
+  }
+  return (rng() > 0.5 ? 1 : -1) * magnitude;
 }
