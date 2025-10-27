@@ -20,6 +20,9 @@ function ensureGuiFolderStyles() {
       background-color: #5a5a5a;
       color: #ffffff;
     }
+    .lil-gui {
+      --number-color: #ff6434;
+    }
   `;
   document.head.appendChild(style);
 }
@@ -31,27 +34,27 @@ export function createControlsPanel(params, callbacks) {
   const layoutFolder = gui.addFolder("Plan");
   layoutFolder
     .add(params, "type", TYPE_OPTIONS)
-    .name("Type")
-    .onFinishChange(callbacks.onChange);
-  const seedController = layoutFolder
-    .add(params, "seed", 1, 1000, 1)
-    .name("Seed")
-    .onFinishChange(callbacks.onChange);
-  layoutFolder
-    .add(params, "cellSize", 1, 8, 0.5)
-    .name("Cell Size")
-    .onFinishChange(callbacks.onChange);
-  layoutFolder
-    .add(params, "gridWidth", 8, 64, 1)
-    .name("Grid Width")
-    .onFinishChange(callbacks.onChange);
-  layoutFolder
-    .add(params, "gridHeight", 8, 64, 1)
-    .name("Grid Length")
+    .name("Layout Style")
     .onFinishChange(callbacks.onChange);
   layoutFolder
     .add(params, "symmetry", SYMMETRY_OPTIONS)
-    .name("Symmetry")
+    .name("Layout Symmetry")
+    .onFinishChange(callbacks.onChange);
+  const seedController = layoutFolder
+    .add(params, "seed", 1, 1000, 1)
+    .name("Layout Seed")
+    .onFinishChange(callbacks.onChange);
+  layoutFolder
+    .add(params, "cellSize", 1, 8, 0.5)
+    .name("Grid Cell Size")
+    .onFinishChange(callbacks.onChange);
+  layoutFolder
+    .add(params, "gridWidth", 8, 64, 1)
+    .name("Grid X Amount")
+    .onFinishChange(callbacks.onChange);
+  layoutFolder
+    .add(params, "gridHeight", 8, 64, 1)
+    .name("Grid Y Amount")
     .onFinishChange(callbacks.onChange);
   layoutFolder.open();
 
