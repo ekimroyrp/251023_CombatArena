@@ -6,7 +6,6 @@ const STYLE_PROFILES = {
     roomDensity: 1.0,
     verticality: 1.3,
     loopFactor: 1.2,
-    rampChance: 0.075,
     coverBias: 1.15,
     corridorStyle: "L",
     corridorBlend: 0.3,
@@ -18,7 +17,6 @@ const STYLE_PROFILES = {
     roomDensity: 0.9,
     verticality: 0.75,
     loopFactor: 0.7,
-    rampChance: 0.03,
     coverBias: 1.45,
     corridorStyle: "Manhattan",
     corridorBlend: 0.8,
@@ -30,7 +28,6 @@ const STYLE_PROFILES = {
     roomDensity: 1.25,
     verticality: 1.6,
     loopFactor: 1.5,
-    rampChance: 0.095,
     coverBias: 0.75,
     corridorStyle: "Bresenham",
     corridorBlend: 0.7,
@@ -79,7 +76,6 @@ export function generateArenaLayout(options) {
     });
   }
 
-  linkFloorsWithRamps(levels, config);
   applySymmetry(levels, config);
 
   return {
@@ -128,7 +124,6 @@ function normalizeOptions(options) {
   const coverProbability = clamp01(
     (options.coverProbability ?? 0.1) * (styleProfile.coverBias ?? 1)
   );
-  const rampChance = clamp01(styleProfile.rampChance ?? 0.05);
 
   const corridorStyle =
     options.corridorStyle ?? styleProfile.corridorStyle ?? "L";
@@ -155,7 +150,6 @@ function normalizeOptions(options) {
     rectangularity: Math.max(1, styleProfile.rectangularity ?? 1),
     atriumChance: clamp01(styleProfile.atriumChance ?? 0),
     coverProbability,
-    rampChance,
     wallHeight: clamp(options.wallHeight ?? 2, 1, 16),
     loopFactor: Math.max(0, styleProfile.loopFactor ?? 1)
   };
@@ -567,57 +561,6 @@ function getNeighbors4(x, y, width, height) {
   if (y > 0) neighbors.push({ x, y: y - 1 });
   if (y < height - 1) neighbors.push({ x, y: y + 1 });
   return neighbors;
-}
-
-function linkFloorsWithRamps(levels, config) {
-  if (levels.length <= 1) {
-    return;
-  }
-
-  for (let i = 0; i < levels.length - 1; i += 1) {
-    const lower = levels[i];
-    const upper = levels[i + 1];
-    const linkRng = createRng(`${config.seed}-link-${i}`);
-    const candidates = [];
-
-    for (let y = 0; y < lower.height; y += 1) {
-      for (let x = 0; x < lower.width; x += 1) {
-        if (!lower.grid[y][x].solid && !upper.grid[y][x].solid) {
-          candidates.push({ x, y });
-        }
-      }
-    }
-
-    if (candidates.length === 0) {
-      // Create a fallback corridor column if the upper level is missing coverage here.
-      const fallback = lower.rooms[0]?.center ?? {
-        x: Math.floor(lower.width / 2),
-        y: Math.floor(lower.height / 2)
-      };
-      if (insideBounds(lower.grid, fallback.x, fallback.y)) {
-        lower.grid[fallback.y][fallback.x].solid = false;
-        upper.grid[fallback.y][fallback.x].solid = false;
-        candidates.push(fallback);
-      }
-    }
-
-    if (candidates.length === 0) {
-      continue;
-    }
-
-    shuffleInPlace(candidates, linkRng);
-    const desired = Math.round(candidates.length * config.rampChance);
-    const count = Math.min(
-      candidates.length,
-      Math.max(1, desired)
-    );
-
-    for (let c = 0; c < count; c += 1) {
-      const cell = candidates[c];
-      lower.grid[cell.y][cell.x].rampUp = true;
-      upper.grid[cell.y][cell.x].rampDown = true;
-    }
-  }
 }
 
 function applySymmetry(levels, config) {

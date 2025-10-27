@@ -4,16 +4,16 @@ Procedural FPS arena blockout generator built with Three.js. The tool carves a g
 
 ## Features
 - Adjustable grid dimensions, room density, and room size caps for shaping the arena.
-- Style presets (Halo, Counter Strike 2, Quake) that bias room density, verticality, ramps, and corridor flow to echo those franchises while still honoring your sliders.
+- Style presets (Halo, Counter Strike 2, Quake) that bias room density, verticality and corridor flow to echo those franchises while still honoring your sliders.
 - Stackable floor levels with a dedicated slider; each level is generated from its own seeded layout so upper decks can fully or partially cover the floor below.
 - Per-floor platform slider (with dedicated seed) to sprinkle mid-height mezzanines that hug room boundaries at half wall height.
 - Multiple corridor routing modes (L-shape, Manhattan walk, Bresenham line) to experiment with different flow patterns.
 - Seeded random generation so layouts can be reproduced or rolled at will.
-- Cover probability slider plus automatic ramps to control inter-floor connectors.
+- Cover probability slider to rough in inter-floor connectors.
 - One-click OBJ export from the Actions panel for bringing blockouts into DCC tools or other engines.
-- Merged floor, wall, cover, and ramp meshes to keep draw calls low while iterating.
+- Merged floor, wall, cover, and platform meshes to keep draw calls low while iterating.
 - Houdini-style infinite ground grid that respects the cell size and fades with distance for orientation.
-- Optional X/Y/XY symmetry passes that clone the finished layout (floors, props, ramps, platforms) without seams.
+- Optional X/Y/XY symmetry passes that clone the finished layout (floors, props, platforms) without seams.
 
 ## Scripts
 - `npm run dev` - start Vite with hot reload.

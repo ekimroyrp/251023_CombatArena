@@ -1,11 +1,10 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
-const DEFAULT_COVER_COLOR = 0x707070;
-const DEFAULT_PLATFORM_COLOR = 0x949494;
 const DEFAULT_FLOOR_COLOR = 0x404040;
 const DEFAULT_WALL_COLOR = 0xffffff;
-const RAMP_COLOR = 0x5a664f;
+const DEFAULT_COVER_COLOR = 0x707070;
+const DEFAULT_PLATFORM_COLOR = 0x949494;
 
 export function buildBlockoutGroup(layout, colors = {}) {
   const group = new THREE.Group();
@@ -15,13 +14,14 @@ export function buildBlockoutGroup(layout, colors = {}) {
   const wallGeometries = [];
   const coverGeometries = [];
   const platformGeometries = [];
-  const rampGeometries = [];
 
   const { cellSize, wallHeight, floorThickness, levels } = layout;
   const floorColor = new THREE.Color(colors.floorColor ?? DEFAULT_FLOOR_COLOR);
   const wallColor = new THREE.Color(colors.wallColor ?? DEFAULT_WALL_COLOR);
-  const platformColor = new THREE.Color(colors.platformColor ?? DEFAULT_PLATFORM_COLOR);
   const coverColor = new THREE.Color(colors.coverColor ?? DEFAULT_COVER_COLOR);
+  const platformColor = new THREE.Color(
+    colors.platformColor ?? DEFAULT_PLATFORM_COLOR
+  );
 
   const wallThickness = Math.max(0.4, cellSize * 0.2);
 
@@ -69,12 +69,6 @@ export function buildBlockoutGroup(layout, colors = {}) {
           coverGeometries.push(cover);
         }
 
-        if (cell.rampUp) {
-          const ramp = createRampGeometry(cellSize, wallHeight);
-          ramp.translate(wx, floorY, wz);
-          rampGeometries.push(ramp);
-        }
-
         if (cell.platformId !== null) {
           const platform = new THREE.BoxGeometry(
             cellSize,
@@ -109,11 +103,6 @@ export function buildBlockoutGroup(layout, colors = {}) {
     group,
     platformGeometries,
     new THREE.MeshStandardMaterial({ color: platformColor, roughness: 0.5 })
-  );
-  addMergedMesh(
-    group,
-    rampGeometries,
-    new THREE.MeshStandardMaterial({ color: RAMP_COLOR, roughness: 0.6 })
   );
 
   return group;
@@ -182,60 +171,6 @@ function addWallsForCell({
     );
     wallGeometries.push(wall);
   }
-}
-
-function createRampGeometry(cellSize, wallHeight) {
-  const halfWidth = cellSize / 2;
-  const halfDepth = cellSize / 2;
-  const h = wallHeight;
-
-  const positions = new Float32Array([
-    // Bottom
-    -halfWidth, 0, -halfDepth,
-    halfWidth, 0, -halfDepth,
-    halfWidth, 0, halfDepth,
-
-    -halfWidth, 0, -halfDepth,
-    halfWidth, 0, halfDepth,
-    -halfWidth, 0, halfDepth,
-
-    // Back vertical
-    -halfWidth, 0, halfDepth,
-    halfWidth, 0, halfDepth,
-    halfWidth, h, halfDepth,
-
-    -halfWidth, 0, halfDepth,
-    halfWidth, h, halfDepth,
-    -halfWidth, h, halfDepth,
-
-    // Left triangle
-    -halfWidth, 0, -halfDepth,
-    -halfWidth, 0, halfDepth,
-    -halfWidth, h, halfDepth,
-
-    // Right triangle
-    halfWidth, 0, -halfDepth,
-    halfWidth, h, halfDepth,
-    halfWidth, 0, halfDepth,
-
-    // Slope
-    -halfWidth, h, halfDepth,
-    halfWidth, h, halfDepth,
-    halfWidth, 0, -halfDepth,
-
-    -halfWidth, h, halfDepth,
-    halfWidth, 0, -halfDepth,
-    -halfWidth, 0, -halfDepth
-  ]);
-
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute(
-    "position",
-    new THREE.Float32BufferAttribute(positions, 3)
-  );
-  geometry.computeVertexNormals();
-
-  return geometry;
 }
 
 function addMergedMesh(group, geometries, material) {
