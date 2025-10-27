@@ -40,13 +40,19 @@ export function createGroundGrid(initialCellSize, color = "#969696") {
         vec2 planePos = vWorldPos.xz / max(uCellSize, 0.0001);
         vec2 derivative = fwidth(planePos);
         derivative = max(derivative, vec2(0.0005));
+
         vec2 grid = abs(fract(planePos - 0.5) - 0.5) / derivative;
         float line = 1.0 - min(1.0, min(grid.x, grid.y));
+
+        float centerMask = max(0.0, 1.0 - min(abs(planePos.x), abs(planePos.y)));
+        float thicknessScale = mix(1.0, 0.25, centerMask);
+        vec2 adjustedGrid = abs(fract(planePos - 0.5) - 0.5) / (derivative / thicknessScale);
+        float adjustedLine = 1.0 - min(1.0, min(adjustedGrid.x, adjustedGrid.y));
 
         float dist = length(vWorldPos.xz - cameraPosition.xz);
         float fade = exp(-dist * uFadeStrength);
 
-        float alpha = line * fade * uLineAlpha;
+        float alpha = adjustedLine * fade * uLineAlpha;
         if (alpha <= 0.001) {
           discard;
         }

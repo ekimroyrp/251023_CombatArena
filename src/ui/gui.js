@@ -108,7 +108,7 @@ export function createControlsPanel(params, callbacks) {
     .onFinishChange(callbacks.onChange);
   displayFolder.open();
 
-  const actionFolder = gui.addFolder("Actions");
+  const actionFolder = gui.addFolder("Save");
   actionFolder
     .add(
       {
@@ -116,7 +116,7 @@ export function createControlsPanel(params, callbacks) {
       },
       "export"
     )
-    .name("Export");
+    .name("Mesh");
 
   return {
     gui,
