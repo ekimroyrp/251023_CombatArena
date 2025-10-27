@@ -4,7 +4,28 @@ export const TYPE_OPTIONS = ["Halo", "Counter Strike 2", "Quake"];
 export const CORRIDOR_OPTIONS = ["L", "Manhattan", "Bresenham"];
 export const SYMMETRY_OPTIONS = ["None", "X", "Y", "XY"];
 
+const GUI_FOLDER_STYLE_ID = "combat-arena-gui-folder-style";
+
+function ensureGuiFolderStyles() {
+  if (typeof document === "undefined") {
+    return;
+  }
+  if (document.getElementById(GUI_FOLDER_STYLE_ID)) {
+    return;
+  }
+  const style = document.createElement("style");
+  style.id = GUI_FOLDER_STYLE_ID;
+  style.textContent = `
+    .lil-gui.lil-root .lil-gui:not(.lil-root) > .lil-title {
+      background-color: #5a5a5a;
+      color: #ffffff;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 export function createControlsPanel(params, callbacks) {
+  ensureGuiFolderStyles();
   const gui = new GUI();
 
   const layoutFolder = gui.addFolder("Plan");
