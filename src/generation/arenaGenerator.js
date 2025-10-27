@@ -118,7 +118,7 @@ function normalizeOptions(options) {
   );
 
   const coverProbability = clamp01(
-    (options.coverProbability ?? 0.1) * (styleProfile.coverBias ?? 1)
+    ((options.coverProbability ?? 10.0) * 0.01) * (styleProfile.coverBias ?? 1)
   );
 
   const corridorStyle =
@@ -652,3 +652,4 @@ function clamp(value, min, max) {
 function clamp01(value) {
   return clamp(value, 0, 1);
 }
+

@@ -76,7 +76,7 @@ export function createControlsPanel(params, callbacks) {
 
   const propsFolder = gui.addFolder("Cover");
   propsFolder
-    .add(params, "coverProbability", 0, 0.5, 0.01)
+    .add(params, "coverProbability", 0, 50, 1)
     .name("Cover Percentage")
     .onFinishChange(callbacks.onChange);
   propsFolder.open();
