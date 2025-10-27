@@ -158,7 +158,7 @@ function normalizeOptions(options) {
     atriumChance: clamp01(styleProfile.atriumChance ?? 0),
     coverProbability,
     rampProbability,
-    wallHeight: clamp(options.wallHeight ?? 6, 2, 16),
+    wallHeight: clamp(options.wallHeight ?? 2, 1, 16),
     loopFactor: Math.max(0, styleProfile.loopFactor ?? 1)
   };
 }

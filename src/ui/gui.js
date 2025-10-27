@@ -17,7 +17,7 @@ export function createControlsPanel(params, callbacks) {
     .name("Seed")
     .onFinishChange(callbacks.onChange);
   layoutFolder
-    .add(params, "cellSize", 2, 8, 0.5)
+    .add(params, "cellSize", 1, 8, 0.5)
     .name("Cell Size")
     .onFinishChange(callbacks.onChange);
   layoutFolder
@@ -65,7 +65,7 @@ export function createControlsPanel(params, callbacks) {
 
   const elevationFolder = gui.addFolder("Elevation");
   elevationFolder
-    .add(params, "wallHeight", 3, 12, 0.5)
+    .add(params, "wallHeight", 1, 12, 0.5)
     .name("Wall Height")
     .onFinishChange(callbacks.onChange);
   elevationFolder
