@@ -1,8 +1,10 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
-const DEFAULT_COVER_COLOR = 0x4f5864;
-const DEFAULT_PLATFORM_COLOR = 0xd8dce1;
+const DEFAULT_COVER_COLOR = 0x707070;
+const DEFAULT_PLATFORM_COLOR = 0x949494;
+const DEFAULT_FLOOR_COLOR = 0x404040;
+const DEFAULT_WALL_COLOR = 0xffffff;
 const RAMP_COLOR = 0x5a664f;
 
 export function buildBlockoutGroup(layout, colors = {}) {
@@ -16,8 +18,8 @@ export function buildBlockoutGroup(layout, colors = {}) {
   const rampGeometries = [];
 
   const { cellSize, wallHeight, floorThickness, levels } = layout;
-  const floorColor = new THREE.Color(colors.floorColor ?? 0x3a3f47);
-  const wallColor = new THREE.Color(colors.wallColor ?? 0x1f252c);
+  const floorColor = new THREE.Color(colors.floorColor ?? DEFAULT_FLOOR_COLOR);
+  const wallColor = new THREE.Color(colors.wallColor ?? DEFAULT_WALL_COLOR);
   const platformColor = new THREE.Color(colors.platformColor ?? DEFAULT_PLATFORM_COLOR);
   const coverColor = new THREE.Color(colors.coverColor ?? DEFAULT_COVER_COLOR);
 

@@ -25,12 +25,12 @@ const DEFAULT_PARAMS = {
   platforms: 0,
   platformSeed: 0,
   symmetry: "None",
-  floorColor: "#3a3f47",
-  wallColor: "#1f252c",
-  platformColor: "#d8dce1",
-  coverColor: "#4f5864",
-  backgroundColor: "#6b6d6f",
-  gridColor: "#d0d4da"
+  floorColor: "#404040",
+  wallColor: "#ffffff",
+  platformColor: "#949494",
+  coverColor: "#707070",
+  backgroundColor: "#2a2833",
+  gridColor: "#969696"
 };
 
 export function initApp(container) {

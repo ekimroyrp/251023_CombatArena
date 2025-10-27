@@ -4,7 +4,7 @@ const GRID_EXTENT = 4000;
 const FADE_STRENGTH = 0.01;
 const LINE_ALPHA = 0.55;
 
-export function createGroundGrid(initialCellSize, color = "#d0d4da") {
+export function createGroundGrid(initialCellSize, color = "#969696") {
   const geometry = new THREE.PlaneGeometry(GRID_EXTENT, GRID_EXTENT, 1, 1);
   geometry.rotateX(-Math.PI / 2);
 
@@ -74,6 +74,6 @@ export function updateGroundGrid(grid, cellSize, color) {
   }
   grid.uniforms.uCellSize.value = Math.max(0.001, cellSize);
   if (grid.uniforms.uGridColor) {
-    grid.uniforms.uGridColor.value.set(color ?? "#d0d4da");
+    grid.uniforms.uGridColor.value.set(color ?? "#969696");
   }
 }
