@@ -3,8 +3,8 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 
 const DEFAULT_FLOOR_COLOR = 0x404040;
 const DEFAULT_WALL_COLOR = 0xffffff;
-const DEFAULT_COVER_COLOR = 0x707070;
-const DEFAULT_PLATFORM_COLOR = 0x949494;
+const DEFAULT_COVER_COLOR = 0xff7b00;
+const DEFAULT_PLATFORM_COLOR = 0x787878;
 
 export function buildBlockoutGroup(layout, colors = {}) {
   const group = new THREE.Group();
@@ -60,12 +60,13 @@ export function buildBlockoutGroup(layout, colors = {}) {
         });
 
         if (cell.cover) {
+          const coverHeight = 1;
           const cover = new THREE.BoxGeometry(
             cellSize * 0.6,
-            wallHeight * 0.4,
+            coverHeight,
             cellSize * 0.6
           );
-          cover.translate(wx, floorY + wallHeight * 0.2, wz);
+          cover.translate(wx, floorY + coverHeight / 2, wz);
           coverGeometries.push(cover);
         }
 

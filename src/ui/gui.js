@@ -74,10 +74,10 @@ export function createControlsPanel(params, callbacks) {
     .onFinishChange(callbacks.onChange);
   elevationFolder.open();
 
-  const propsFolder = gui.addFolder("Props");
+  const propsFolder = gui.addFolder("Cover");
   propsFolder
     .add(params, "coverProbability", 0, 0.5, 0.01)
-    .name("Cover Chance")
+    .name("Cover Percentage")
     .onFinishChange(callbacks.onChange);
   propsFolder.open();
 

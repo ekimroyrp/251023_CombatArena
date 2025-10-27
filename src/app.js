@@ -26,8 +26,8 @@ const DEFAULT_PARAMS = {
   symmetry: "None",
   floorColor: "#404040",
   wallColor: "#ffffff",
-  platformColor: "#949494",
-  coverColor: "#707070",
+  platformColor: "#787878",
+  coverColor: "#ff7b00",
   backgroundColor: "#2a2833",
   gridColor: "#969696"
 };
