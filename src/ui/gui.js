@@ -79,10 +79,6 @@ export function createControlsPanel(params, callbacks) {
     .add(params, "coverProbability", 0, 0.5, 0.01)
     .name("Cover Chance")
     .onFinishChange(callbacks.onChange);
-  propsFolder
-    .add(params, "rampProbability", 0, 0.3, 0.01)
-    .name("Ramp Chance")
-    .onFinishChange(callbacks.onChange);
   propsFolder.open();
 
   const displayFolder = gui.addFolder("Display");
@@ -111,6 +107,7 @@ export function createControlsPanel(params, callbacks) {
     .name("Grid Color")
     .onFinishChange(callbacks.onChange);
   displayFolder.open();
+
   const actionFolder = gui.addFolder("Actions");
   actionFolder
     .add(

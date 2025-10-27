@@ -6,7 +6,7 @@ const STYLE_PROFILES = {
     roomDensity: 1.0,
     verticality: 1.3,
     loopFactor: 1.2,
-    rampBias: 1.5,
+    rampChance: 0.075,
     coverBias: 1.15,
     corridorStyle: "L",
     corridorBlend: 0.3,
@@ -18,7 +18,7 @@ const STYLE_PROFILES = {
     roomDensity: 0.9,
     verticality: 0.75,
     loopFactor: 0.7,
-    rampBias: 0.6,
+    rampChance: 0.03,
     coverBias: 1.45,
     corridorStyle: "Manhattan",
     corridorBlend: 0.8,
@@ -30,7 +30,7 @@ const STYLE_PROFILES = {
     roomDensity: 1.25,
     verticality: 1.6,
     loopFactor: 1.5,
-    rampBias: 1.9,
+    rampChance: 0.095,
     coverBias: 0.75,
     corridorStyle: "Bresenham",
     corridorBlend: 0.7,
@@ -128,9 +128,7 @@ function normalizeOptions(options) {
   const coverProbability = clamp01(
     (options.coverProbability ?? 0.1) * (styleProfile.coverBias ?? 1)
   );
-  const rampProbability = clamp01(
-    (options.rampProbability ?? 0.05) * (styleProfile.rampBias ?? 1)
-  );
+  const rampChance = clamp01(styleProfile.rampChance ?? 0.05);
 
   const corridorStyle =
     options.corridorStyle ?? styleProfile.corridorStyle ?? "L";
@@ -157,7 +155,7 @@ function normalizeOptions(options) {
     rectangularity: Math.max(1, styleProfile.rectangularity ?? 1),
     atriumChance: clamp01(styleProfile.atriumChance ?? 0),
     coverProbability,
-    rampProbability,
+    rampChance,
     wallHeight: clamp(options.wallHeight ?? 2, 1, 16),
     loopFactor: Math.max(0, styleProfile.loopFactor ?? 1)
   };
@@ -608,7 +606,7 @@ function linkFloorsWithRamps(levels, config) {
     }
 
     shuffleInPlace(candidates, linkRng);
-    const desired = Math.round(candidates.length * config.rampProbability);
+    const desired = Math.round(candidates.length * config.rampChance);
     const count = Math.min(
       candidates.length,
       Math.max(1, desired)

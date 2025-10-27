@@ -20,7 +20,6 @@ const DEFAULT_PARAMS = {
   maxRoomSize: 8,
   corridorStyle: "L",
   coverProbability: 0.1,
-  rampProbability: 0.05,
   wallHeight: 2,
   platforms: 0,
   platformSeed: 0,
