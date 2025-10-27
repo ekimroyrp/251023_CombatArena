@@ -59,7 +59,7 @@ export function generateArenaLayout(options) {
     }
 
     connectRooms(grid, rooms, config, levelRng);
-    sprinkleCover(grid, config, levelRng);
+    sprinkleCover(grid, config, createRng(`${config.seed}-cover-${levelIndex}-${config.coverSeed}`));
     const platformRng = createRng(
       `${config.seed}-platform-${config.platformSeed}-L${levelIndex}`
     );
@@ -82,6 +82,7 @@ export function generateArenaLayout(options) {
     cellSize: config.cellSize,
     wallHeight: config.wallHeight,
     floorThickness,
+    platformThickness: config.platformThickness,
     levelSpacing,
     levels
   };
@@ -110,6 +111,12 @@ function normalizeOptions(options) {
 
   const rawSeed = clamp(Math.floor(options.seed ?? 0), 1, 1000);
   const platformSeed = clamp(Math.floor(options.platformSeed ?? 0), 0, 999);
+  const coverSeed = clamp(Math.floor(options.coverSeed ?? 1), 1, 1000);
+  const platformThickness = clamp(
+    Number.isFinite(options.platformThickness) ? options.platformThickness : 0.25,
+    0.25,
+    10
+  );
   const basePlatforms = clamp(Math.floor(options.platforms ?? 0), 0, 20);
   const platformsPerFloor = clamp(
     Math.round(basePlatforms * (styleProfile.verticality ?? 1)),
@@ -126,6 +133,7 @@ function normalizeOptions(options) {
 
   return {
     seed: String(rawSeed),
+    coverSeed: String(coverSeed),
     type,
     styleProfile,
     width,
@@ -135,6 +143,7 @@ function normalizeOptions(options) {
     floors,
     platformsPerFloor,
     platformSeed,
+    platformThickness,
     symmetry,
     maxRoomSize: Math.min(maxRoomSize, width - 2, height - 2),
     corridorStyle,
@@ -652,4 +661,5 @@ function clamp(value, min, max) {
 function clamp01(value) {
   return clamp(value, 0, 1);
 }
+
 

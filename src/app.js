@@ -23,11 +23,13 @@ const DEFAULT_PARAMS = {
   wallHeight: 2,
   platforms: 0,
   platformSeed: 0,
+  platformThickness: 0.25,
   symmetry: "None",
   floorColor: "#404040",
   wallColor: "#ffffff",
   platformColor: "#787878",
   coverColor: "#ff7b00",
+  coverSeed: 1,
   backgroundColor: "#2a2833",
   gridColor: "#969696"
 };

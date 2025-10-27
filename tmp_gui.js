@@ -55,15 +55,11 @@ export function createControlsPanel(params, callbacks) {
   const platformsFolder = gui.addFolder("Platforms");
   platformsFolder
     .add(params, "platforms", 0, 10, 1)
-    .name("Platform Amount")
-    .onFinishChange(callbacks.onChange);
-  platformsFolder
-    .add(params, "platformThickness", 0.25, 10, 0.25)
-    .name("Platform Thickness")
+    .name("Count")
     .onFinishChange(callbacks.onChange);
   platformsFolder
     .add(params, "platformSeed", 0, 999, 1)
-    .name("Platform Seed")
+    .name("Seed")
     .onFinishChange(callbacks.onChange);
   platformsFolder.open();
 
@@ -74,7 +70,7 @@ export function createControlsPanel(params, callbacks) {
     .onFinishChange(callbacks.onChange);
   elevationFolder
     .add(params, "floors", 1, 5, 1)
-    .name("Floor Amount")
+    .name("Floors")
     .onFinishChange(callbacks.onChange);
   elevationFolder.open();
 
@@ -82,10 +78,6 @@ export function createControlsPanel(params, callbacks) {
   propsFolder
     .add(params, "coverProbability", 0, 50, 1)
     .name("Cover Percentage")
-    .onFinishChange(callbacks.onChange);
-  propsFolder
-    .add(params, "coverSeed", 1, 1000, 1)
-    .name("Cover Seed")
     .onFinishChange(callbacks.onChange);
   propsFolder.open();
 

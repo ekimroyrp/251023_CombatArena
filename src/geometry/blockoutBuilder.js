@@ -15,12 +15,17 @@ export function buildBlockoutGroup(layout, colors = {}) {
   const coverGeometries = [];
   const platformGeometries = [];
 
-  const { cellSize, wallHeight, floorThickness, levels } = layout;
+  const { cellSize, wallHeight, floorThickness, platformThickness, levels } = layout;
   const floorColor = new THREE.Color(colors.floorColor ?? DEFAULT_FLOOR_COLOR);
   const wallColor = new THREE.Color(colors.wallColor ?? DEFAULT_WALL_COLOR);
   const coverColor = new THREE.Color(colors.coverColor ?? DEFAULT_COVER_COLOR);
   const platformColor = new THREE.Color(
     colors.platformColor ?? DEFAULT_PLATFORM_COLOR
+  );
+
+  const effectivePlatformThickness = Math.max(
+    0.001,
+    Math.min(platformThickness ?? floorThickness, 10)
   );
 
   const wallThickness = Math.max(0.4, cellSize * 0.2);
@@ -71,13 +76,14 @@ export function buildBlockoutGroup(layout, colors = {}) {
         }
 
         if (cell.platformId !== null) {
+          const platformHeight = effectivePlatformThickness;
           const platform = new THREE.BoxGeometry(
             cellSize,
-            floorThickness,
+            platformHeight,
             cellSize
           );
-          const platformY =
-            floorY + wallHeight * 0.5 - floorThickness / 2;
+          const platformTop = floorY + wallHeight * 0.5;
+          const platformY = platformTop - platformHeight / 2;
           platform.translate(wx, platformY, wz);
           platformGeometries.push(platform);
         }
