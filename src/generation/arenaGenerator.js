@@ -102,11 +102,7 @@ function normalizeOptions(options) {
     1,
     96
   );
-  const floors = clamp(
-    Math.round(baseFloors * (styleProfile.verticality ?? 1)),
-    1,
-    8
-  );
+  const floors = baseFloors;
 
   const symmetryRaw = String(options.symmetry ?? "None").toUpperCase();
   const allowedSym = new Set(["NONE", "X", "Y", "XY"]);
