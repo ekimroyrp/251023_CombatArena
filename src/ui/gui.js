@@ -48,7 +48,7 @@ export function createControlsPanel(params, callbacks) {
   const corridorsFolder = gui.addFolder("Corridors");
   corridorsFolder
     .add(params, "corridorStyle", CORRIDOR_OPTIONS)
-    .name("Style")
+    .name("Corridor Type")
     .onFinishChange(callbacks.onChange);
   corridorsFolder.open();
 
