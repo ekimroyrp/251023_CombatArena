@@ -66,7 +66,7 @@ export function buildBlockoutGroup(layout, colors = {}) {
         });
 
         if (cell.cover) {
-          const coverHeight = 1;
+          const coverHeight = 0.5;
           const cover = new THREE.BoxGeometry(
             cellSize * 0.6,
             coverHeight,
