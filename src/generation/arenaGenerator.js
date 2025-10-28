@@ -596,7 +596,6 @@ function growPlatformFromSeed(grid, seed, platformId, targetSize, rng) {
     }
 
     cell.platformId = platformId;
-    cell.cover = false;
     carved.push({ x: current.x, y: current.y });
 
     const neighbors = getNeighbors4(current.x, current.y, width, height)
