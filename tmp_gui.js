@@ -70,12 +70,12 @@ export function createControlsPanel(params, callbacks) {
 
   const roomsFolder = gui.addFolder("Rooms");
   roomsFolder
-    .add(params, "rooms", 1, 100, 1)
-    .name("Room Amount")
-    .onFinishChange(callbacks.onChange);
-  roomsFolder
     .add(params, "maxRoomSize", 1, 100, 1)
     .name("Room Size")
+    .onFinishChange(callbacks.onChange);
+  roomsFolder
+    .add(params, "rooms", 1, 100, 1)
+    .name("Room Amount")
     .onFinishChange(callbacks.onChange);
   roomsFolder.open();
 
@@ -101,6 +101,10 @@ export function createControlsPanel(params, callbacks) {
   elevationFolder
     .add(params, "wallHeight", 1, 12, 0.5)
     .name("Wall Height")
+    .onFinishChange(callbacks.onChange);
+  elevationFolder
+    .add(params, "floorThickness", 0.25, 10, 0.25)
+    .name("Floor Thickness")
     .onFinishChange(callbacks.onChange);
   elevationFolder
     .add(params, "floors", 1, 5, 1)

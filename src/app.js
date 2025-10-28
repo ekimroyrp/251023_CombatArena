@@ -21,6 +21,7 @@ const DEFAULT_PARAMS = {
   corridorStyle: "L",
   coverProbability: 0,
   wallHeight: 2,
+  floorThickness: 0.25,
   platforms: 0,
   platformSeed: 0,
   platformThickness: 0.25,

@@ -41,7 +41,7 @@ const STYLE_PROFILES = {
 
 export function generateArenaLayout(options) {
   const config = normalizeOptions(options);
-  const floorThickness = Math.max(0.5, config.cellSize * 0.1);
+  const floorThickness = config.floorThickness;
   const levelSpacing = config.wallHeight;
 
   const levels = [];
@@ -122,6 +122,11 @@ function normalizeOptions(options) {
   const rawSeed = clamp(Math.floor(options.seed ?? 0), 1, 1000);
   const platformSeed = clamp(Math.floor(options.platformSeed ?? 0), 0, 999);
   const coverSeed = clamp(Math.floor(options.coverSeed ?? 1), 1, 1000);
+  const floorThickness = clamp(
+    Number.isFinite(options.floorThickness) ? options.floorThickness : 10,
+    0.25,
+    10
+  );
   const platformThickness = clamp(
     Number.isFinite(options.platformThickness) ? options.platformThickness : 0.25,
     0.25,
@@ -153,6 +158,7 @@ function normalizeOptions(options) {
     floors,
     platformsPerFloor,
     platformSeed,
+    floorThickness,
     platformThickness,
     symmetry,
     maxRoomSize: Math.min(maxRoomSize, width - 2, height - 2),
