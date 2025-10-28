@@ -120,10 +120,10 @@ function normalizeOptions(options) {
   const symmetry = allowedSym.has(symmetryRaw) ? symmetryRaw : "NONE";
 
   const rawSeed = clamp(Math.floor(options.seed ?? 0), 1, 1000);
-  const platformSeed = clamp(Math.floor(options.platformSeed ?? 0), 0, 999);
+  const platformSeed = clamp(Math.floor(options.platformSeed ?? 1), 1, 1000);
   const coverSeed = clamp(Math.floor(options.coverSeed ?? 1), 1, 1000);
   const floorThickness = clamp(
-    Number.isFinite(options.floorThickness) ? options.floorThickness : 10,
+    Number.isFinite(options.floorThickness) ? options.floorThickness : 0.25,
     0.25,
     10
   );
@@ -145,6 +145,23 @@ function normalizeOptions(options) {
 
   const corridorStyle =
     options.corridorStyle ?? styleProfile.corridorStyle ?? "L";
+  const baseCorridorPadding = Math.max(
+    0,
+    Math.round(styleProfile.corridorPadding ?? 1)
+  );
+  const corridorPaddingMinRaw = clamp(
+    Math.floor(options.corridorPaddingMin ?? baseCorridorPadding),
+    0,
+    20
+  );
+  const corridorPaddingMaxRaw = clamp(
+    Math.floor(options.corridorPaddingMax ?? baseCorridorPadding),
+    0,
+    20
+  );
+  const corridorPaddingMin = Math.min(corridorPaddingMinRaw, corridorPaddingMaxRaw);
+  const corridorPaddingMax = Math.max(corridorPaddingMinRaw, corridorPaddingMaxRaw);
+  const corridorSeed = clamp(Math.floor(options.corridorSeed ?? 1), 0, 1000);
 
   return {
     seed: String(rawSeed),
@@ -165,7 +182,9 @@ function normalizeOptions(options) {
     corridorStyle,
     styleCorridor: styleProfile.corridorStyle ?? corridorStyle,
     corridorBlend: clamp01(styleProfile.corridorBlend ?? 0),
-    corridorPadding: Math.max(0, Math.round(styleProfile.corridorPadding ?? 1)),
+    corridorPaddingMin,
+    corridorPaddingMax,
+    corridorSeed: String(corridorSeed),
     carveDiagonals: Boolean(styleProfile.carveDiagonals),
     longRoomBias: clamp01(styleProfile.longRoomBias ?? 0.5),
     rectangularity: Math.max(1, styleProfile.rectangularity ?? 1),
@@ -307,6 +326,7 @@ function connectRooms(grid, rooms, config, rng) {
 
   const connected = [rooms[0]];
   const remaining = rooms.slice(1);
+  let corridorIndex = 0;
 
   while (remaining.length > 0) {
     let bestPair = null;
@@ -333,8 +353,10 @@ function connectRooms(grid, rooms, config, rng) {
       bestPair.source.center,
       bestPair.target.center,
       config,
+      corridorIndex,
       rng
     );
+    corridorIndex += 1;
 
     connected.push(bestPair.target);
     const index = remaining.indexOf(bestPair.target);
@@ -351,11 +373,12 @@ function connectRooms(grid, rooms, config, rng) {
     if (a === b) {
       continue;
     }
-    carveCorridor(grid, a.center, b.center, config, rng);
+    carveCorridor(grid, a.center, b.center, config, corridorIndex, rng);
+    corridorIndex += 1;
   }
 }
 
-function carveCorridor(grid, from, to, config, rng) {
+function carveCorridor(grid, from, to, config, corridorIndex, rng) {
   let corridorStyle = config.corridorStyle;
   if (
     config.styleCorridor &&
@@ -367,7 +390,7 @@ function carveCorridor(grid, from, to, config, rng) {
   }
 
   const path = getCorridorPath(corridorStyle, from, to, rng);
-  const padding = Math.max(0, config.corridorPadding ?? 1);
+  const padding = pickCorridorPadding(config, from, to, corridorIndex);
 
   for (const point of path) {
     if (!insideBounds(grid, point.x, point.y)) {
@@ -378,6 +401,19 @@ function carveCorridor(grid, from, to, config, rng) {
     // Soften hard diagonals by carving a plus-shaped footprint.
     carvePadding(grid, point.x, point.y, padding, config.carveDiagonals);
   }
+}
+
+function pickCorridorPadding(config, from, to, corridorIndex) {
+  const min = Math.max(0, Math.floor(config.corridorPaddingMin ?? 0));
+  const max = Math.max(min, Math.floor(config.corridorPaddingMax ?? min));
+
+  if (min === max) {
+    return min;
+  }
+
+  const seedBase = `${config.seed}-corridor-${config.corridorSeed ?? "0"}-${corridorIndex}-${from.x}-${from.y}-${to.x}-${to.y}`;
+  const paddingRng = createRng(seedBase);
+  return randomInt(paddingRng, min, max);
 }
 
 function carvePadding(grid, x, y, radius, includeDiagonals) {

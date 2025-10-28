@@ -84,6 +84,18 @@ export function createControlsPanel(params, callbacks) {
     .add(params, "corridorStyle", CORRIDOR_OPTIONS)
     .name("Style")
     .onFinishChange(callbacks.onChange);
+  corridorsFolder
+    .add(params, "corridorPaddingMin", 0, 10, 1)
+    .name("Corridor Min")
+    .onFinishChange(callbacks.onChange);
+  corridorsFolder
+    .add(params, "corridorPaddingMax", 0, 10, 1)
+    .name("Corridor Max")
+    .onFinishChange(callbacks.onChange);
+  corridorsFolder
+    .add(params, "corridorSeed", 0, 1000, 1)
+    .name("Corridor Seed")
+    .onFinishChange(callbacks.onChange);
   corridorsFolder.open();
 
   const platformsFolder = gui.addFolder("Platforms");
@@ -92,7 +104,7 @@ export function createControlsPanel(params, callbacks) {
     .name("Count")
     .onFinishChange(callbacks.onChange);
   platformsFolder
-    .add(params, "platformSeed", 0, 999, 1)
+    .add(params, "platformSeed", 1, 1000, 1)
     .name("Seed")
     .onFinishChange(callbacks.onChange);
   platformsFolder.open();
