@@ -8,6 +8,7 @@ export const SYMMETRY_OPTIONS = {
   "X-": "X_NEG",
   "Y+": "Y_POS",
   "Y-": "Y",
+  "X+Y+": "XY_POS",
   "X+Y-": "XY"
 };
 
