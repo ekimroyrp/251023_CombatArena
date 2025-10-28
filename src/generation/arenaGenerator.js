@@ -49,8 +49,11 @@ export function generateArenaLayout(options) {
   for (let levelIndex = 0; levelIndex < config.floors; levelIndex += 1) {
     const levelSeed = `${config.seed}-L${levelIndex}`;
     const levelRng = createRng(levelSeed);
+    const roomSizeRng = createRng(
+      `${config.seed}-room-size-${config.roomSizeSeed ?? "1"}-L${levelIndex}`
+    );
     const grid = createGrid(config.width, config.height);
-    const rooms = carveRooms(grid, config, levelRng);
+    const rooms = carveRooms(grid, config, levelRng, roomSizeRng);
 
     if (rooms.length === 0) {
       const fallback = createFallbackRoom(config);
@@ -91,7 +94,19 @@ export function generateArenaLayout(options) {
 function normalizeOptions(options) {
   const width = clamp(Math.floor(options.gridWidth ?? 32), 8, 96);
   const height = clamp(Math.floor(options.gridHeight ?? 24), 8, 96);
-  const maxRoomSize = clamp(Math.floor(options.maxRoomSize ?? 8), 3, 24);
+  const defaultRoomSizeMax = clamp(Math.floor(options.maxRoomSize ?? 8), 3, 24);
+  const roomSizeMinRaw = clamp(Math.floor(options.roomSizeMin ?? 4), 3, 24);
+  const roomSizeMaxRaw = clamp(
+    Math.floor(options.roomSizeMax ?? defaultRoomSizeMax),
+    3,
+    24
+  );
+  const roomSizeMin = Math.min(roomSizeMinRaw, roomSizeMaxRaw);
+  const roomSizeMax = Math.max(roomSizeMinRaw, roomSizeMaxRaw);
+  const roomSizeSeed = clamp(Math.floor(options.roomSizeSeed ?? 1), 1, 1000);
+  const effectiveRoomSizeMax = Math.min(roomSizeMax, width - 2, height - 2);
+  const effectiveRoomSizeMin = Math.min(roomSizeMin, effectiveRoomSizeMax);
+  const maxRoomSize = effectiveRoomSizeMax;
 
   const type = options.type ?? "Halo";
   const styleProfile = STYLE_PROFILES[type] ?? STYLE_PROFILES.Halo;
@@ -175,6 +190,9 @@ function normalizeOptions(options) {
     floors,
     platformsPerFloor,
     platformSeed,
+    roomSizeMin: effectiveRoomSizeMin,
+    roomSizeMax: effectiveRoomSizeMax,
+    roomSizeSeed: String(roomSizeSeed),
     floorThickness,
     platformThickness,
     symmetry,
@@ -207,10 +225,14 @@ function createGrid(width, height) {
   );
 }
 
-function carveRooms(grid, config, rng) {
+function carveRooms(grid, config, rng, sizeRng) {
   const rooms = [];
   const attemptsLimit = config.rooms * 12;
   let attempts = 0;
+
+  const sizeRn = typeof sizeRng === "function" ? sizeRng : rng;
+  const baseMinSize = Math.max(3, config.roomSizeMin ?? 3);
+  const baseMaxSize = Math.max(baseMinSize, config.roomSizeMax ?? baseMinSize);
 
   while (rooms.length < config.rooms && attempts < attemptsLimit) {
     attempts += 1;
@@ -239,19 +261,25 @@ function carveRooms(grid, config, rng) {
       );
     }
 
-    widthLimit = Math.max(3, widthLimit);
-    heightLimit = Math.max(3, heightLimit);
+    widthLimit = Math.max(3, Math.min(widthLimit, config.width - 2));
+    heightLimit = Math.max(3, Math.min(heightLimit, config.height - 2));
 
+    const minWidth = Math.min(widthLimit, baseMinSize);
+    const maxWidth = Math.max(minWidth, Math.min(widthLimit, baseMaxSize));
     const roomWidth = clamp(
-      randomInt(rng, 3, widthLimit),
+      randomInt(sizeRn, Math.floor(minWidth), Math.floor(maxWidth)),
       3,
       config.width - 2
     );
+
+    const minHeight = Math.min(heightLimit, baseMinSize);
+    const maxHeight = Math.max(minHeight, Math.min(heightLimit, baseMaxSize));
     const roomHeight = clamp(
-      randomInt(rng, 3, heightLimit),
+      randomInt(sizeRn, Math.floor(minHeight), Math.floor(maxHeight)),
       3,
       config.height - 2
     );
+
     const x = randomInt(rng, 1, Math.max(1, config.width - roomWidth - 1));
     const y = randomInt(rng, 1, Math.max(1, config.height - roomHeight - 1));
 
@@ -746,5 +774,7 @@ function clamp(value, min, max) {
 function clamp01(value) {
   return clamp(value, 0, 1);
 }
+
+
 
 
