@@ -106,7 +106,7 @@ function normalizeOptions(options) {
   const floors = baseFloors;
 
   const symmetryRaw = String(options.symmetry ?? "None").toUpperCase();
-  const allowedSym = new Set(["NONE", "X", "Y", "XY", "X_NEG"]);
+  const allowedSym = new Set(["NONE", "X", "Y", "XY", "X_NEG", "Y_POS"]);
   const symmetry = allowedSym.has(symmetryRaw) ? symmetryRaw : "NONE";
 
   const rawSeed = clamp(Math.floor(options.seed ?? 0), 1, 1000);
@@ -573,18 +573,22 @@ function applySymmetry(levels, config) {
     return;
   }
 
-  const applyXPositive = config.symmetry === "X" || config.symmetry === "XY";
-  const applyXNegative = config.symmetry === "X_NEG";
-  const applyY = config.symmetry === "Y" || config.symmetry === "XY";
+  const keepTopHalf = config.symmetry === "X" || config.symmetry === "XY";
+  const keepBottomHalf = config.symmetry === "X_NEG";
+  const keepLeftHalf = config.symmetry === "Y" || config.symmetry === "XY";
+  const keepRightHalf = config.symmetry === "Y_POS";
 
   for (const level of levels) {
-    if (applyXPositive) {
+    if (keepTopHalf) {
       mirrorAcrossHorizontalAxis(level.grid, true);
-    } else if (applyXNegative) {
+    } else if (keepBottomHalf) {
       mirrorAcrossHorizontalAxis(level.grid, false);
     }
-    if (applyY) {
-      mirrorVertical(level.grid);
+
+    if (keepLeftHalf) {
+      mirrorAcrossVerticalAxis(level.grid, true);
+    } else if (keepRightHalf) {
+      mirrorAcrossVerticalAxis(level.grid, false);
     }
   }
 }
@@ -623,21 +627,36 @@ function mirrorAcrossHorizontalAxis(grid, keepTopHalf = true) {
   }
 }
 
-function mirrorVertical(grid) {
+function mirrorAcrossVerticalAxis(grid, keepLeftHalf = true) {
   const height = grid.length;
   const width = grid[0].length;
-  const original = grid.map((row) => row.map((cell) => cloneCell(cell)));
-  const limit = Math.ceil(width / 2);
+  if (width <= 1) {
+    return;
+  }
 
-  for (let x = 0; x < limit; x += 1) {
+  const source = grid.map((row) => row.map((cell) => cloneCell(cell)));
+
+  for (let x = 0; x < width; x += 1) {
     const mirrorX = width - 1 - x;
-    for (let y = 0; y < height; y += 1) {
-      const combined = combineCells(original[y][x], original[y][mirrorX]);
-      grid[y][x] = combined;
+    if (mirrorX < 0 || mirrorX >= width) {
+      continue;
+    }
 
-      if (mirrorX !== x) {
-        grid[y][mirrorX] = cloneCell(combined);
+    const isRightHalf = x > mirrorX;
+    const isLeftHalf = x < mirrorX;
+
+    if (keepLeftHalf) {
+      if (!isRightHalf) {
+        continue;
       }
+    } else {
+      if (!isLeftHalf) {
+        continue;
+      }
+    }
+
+    for (let y = 0; y < height; y += 1) {
+      grid[y][x] = cloneCell(source[y][mirrorX]);
     }
   }
 }
@@ -649,22 +668,6 @@ function cloneCell(cell) {
     rampUp: cell.rampUp,
     rampDown: cell.rampDown,
     platformId: cell.platformId
-  };
-}
-
-function combineCells(a, b) {
-  const solid = a.solid && b.solid;
-  const cover = !solid && (a.cover || b.cover);
-  const rampUp = !solid && (a.rampUp || b.rampUp);
-  const rampDown = !solid && (a.rampDown || b.rampDown);
-  const platformId = solid ? null : a.platformId ?? b.platformId;
-
-  return {
-    solid,
-    cover,
-    rampUp,
-    rampDown,
-    platformId
   };
 }
 
