@@ -106,7 +106,7 @@ function normalizeOptions(options) {
   const floors = baseFloors;
 
   const symmetryRaw = String(options.symmetry ?? "None").toUpperCase();
-  const allowedSym = new Set(["NONE", "X", "Y", "XY"]);
+  const allowedSym = new Set(["NONE", "X", "Y", "XY", "X_NEG"]);
   const symmetry = allowedSym.has(symmetryRaw) ? symmetryRaw : "NONE";
 
   const rawSeed = clamp(Math.floor(options.seed ?? 0), 1, 1000);
@@ -573,12 +573,15 @@ function applySymmetry(levels, config) {
     return;
   }
 
-  const applyX = config.symmetry === "X" || config.symmetry === "XY";
+  const applyXPositive = config.symmetry === "X" || config.symmetry === "XY";
+  const applyXNegative = config.symmetry === "X_NEG";
   const applyY = config.symmetry === "Y" || config.symmetry === "XY";
 
   for (const level of levels) {
-    if (applyX) {
-      mirrorAcrossHorizontalAxis(level.grid);
+    if (applyXPositive) {
+      mirrorAcrossHorizontalAxis(level.grid, true);
+    } else if (applyXNegative) {
+      mirrorAcrossHorizontalAxis(level.grid, false);
     }
     if (applyY) {
       mirrorVertical(level.grid);
@@ -586,7 +589,7 @@ function applySymmetry(levels, config) {
   }
 }
 
-function mirrorAcrossHorizontalAxis(grid) {
+function mirrorAcrossHorizontalAxis(grid, keepTopHalf = true) {
   const height = grid.length;
   const width = grid[0].length;
   if (height <= 1) {
@@ -594,17 +597,26 @@ function mirrorAcrossHorizontalAxis(grid) {
   }
 
   const source = grid.map((row) => row.map((cell) => cloneCell(cell)));
-  const hasCenterRow = height % 2 === 1;
-  const pivot = Math.floor(height / 2);
-  const startMirror = hasCenterRow ? pivot + 1 : pivot;
 
-  for (let y = startMirror; y < height; y += 1) {
-    const mirrorY = hasCenterRow
-      ? pivot - (y - pivot)
-      : pivot - 1 - (y - pivot);
+  for (let y = 0; y < height; y += 1) {
+    const mirrorY = height - 1 - y;
     if (mirrorY < 0 || mirrorY >= height) {
       continue;
     }
+
+    const isBottomHalf = y > mirrorY;
+    const isTopHalf = y < mirrorY;
+
+    if (keepTopHalf) {
+      if (!isBottomHalf) {
+        continue;
+      }
+    } else if (!keepTopHalf) {
+      if (!isTopHalf) {
+        continue;
+      }
+    }
+
     for (let x = 0; x < width; x += 1) {
       grid[y][x] = cloneCell(source[mirrorY][x]);
     }

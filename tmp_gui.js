@@ -5,6 +5,7 @@ export const CORRIDOR_OPTIONS = ["L", "Manhattan", "Bresenham", "Spiral", "Radia
 export const SYMMETRY_OPTIONS = {
   None: "None",
   "X+": "X",
+  "X-": "X_NEG",
   Y: "Y",
   XY: "XY"
 };
