@@ -114,7 +114,8 @@ function normalizeOptions(options) {
     "X_NEG",
     "Y_POS",
     "XY_POS",
-    "XY_NEG"
+    "XY_NEG",
+    "XY_NEG_LEFT"
   ]);
   const symmetry = allowedSym.has(symmetryRaw) ? symmetryRaw : "NONE";
 
@@ -587,8 +588,13 @@ function applySymmetry(levels, config) {
     config.symmetry === "XY" ||
     config.symmetry === "XY_POS";
   const keepBottomHalf =
-    config.symmetry === "X_NEG" || config.symmetry === "XY_NEG";
-  const keepLeftHalf = config.symmetry === "Y" || config.symmetry === "XY";
+    config.symmetry === "X_NEG" ||
+    config.symmetry === "XY_NEG" ||
+    config.symmetry === "XY_NEG_LEFT";
+  const keepLeftHalf =
+    config.symmetry === "Y" ||
+    config.symmetry === "XY" ||
+    config.symmetry === "XY_NEG_LEFT";
   const keepRightHalf =
     config.symmetry === "Y_POS" ||
     config.symmetry === "XY_POS" ||
