@@ -151,14 +151,12 @@ export function createControlsPanel(params, callbacks) {
   displayFolder.open();
 
   const actionFolder = gui.addFolder("Save");
-  actionFolder
-    .add(
-      {
-        export: () => callbacks.onExport?.()
-      },
-      "export"
-    )
-    .name("Mesh");
+  const saveActions = {
+    image: () => callbacks.onExportImage?.(),
+    mesh: () => callbacks.onExport?.()
+  };
+  actionFolder.add(saveActions, "image").name("Image");
+  actionFolder.add(saveActions, "mesh").name("Mesh");
 
   return {
     gui,

@@ -35,7 +35,7 @@ const DEFAULT_PARAMS = {
 };
 
 export function initApp(container) {
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled = false;
@@ -83,6 +83,7 @@ export function initApp(container) {
 
   const controlsPanel = createControlsPanel(params, {
     onChange: () => rebuildArena(state),
+    onExportImage: () => exportViewportImage(state),
     onExport: () => {
       if (!state.currentArena) {
         return;
@@ -141,4 +142,55 @@ function onWindowResize(state) {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function exportViewportImage(state) {
+  const { renderer, scene, camera, params } = state;
+  renderer.render(scene, camera);
+
+  const canvas = renderer.domElement;
+  const filename = [
+    "arena",
+    params.type?.toLowerCase().replace(/\s+/g, "-") ?? "layout",
+    params.seed,
+    new Date().toISOString().replace(/[:.]/g, "-")
+  ]
+    .filter(Boolean)
+    .join("_")
+    .concat(".png");
+
+  const triggerDownload = (blob) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadFromDataUrl = () => {
+    const dataUrl = canvas.toDataURL("image/png");
+    const byteString = atob(dataUrl.split(",")[1]);
+    const mimeString = dataUrl.split(",")[0].split(":")[1].split(";")[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i += 1) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    triggerDownload(new Blob([ab], { type: mimeString }));
+  };
+
+  if (canvas.toBlob) {
+    canvas.toBlob((blob) => {
+      if (blob) {
+        triggerDownload(blob);
+      } else {
+        downloadFromDataUrl();
+      }
+    }, "image/png");
+  } else {
+    downloadFromDataUrl();
+  }
 }
