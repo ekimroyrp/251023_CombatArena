@@ -59,6 +59,7 @@ export function buildBlockoutGroup(layout, colors = {}) {
           height: level.height,
           wallThickness,
           wallHeight,
+          floorThickness,
           cellSize,
           baseElevation: floorY,
           wallGeometries
@@ -125,34 +126,38 @@ function addWallsForCell({
   height,
   wallThickness,
   wallHeight,
+  floorThickness,
   cellSize,
   baseElevation,
   wallGeometries
 }) {
+  const totalWallHeight = wallHeight + floorThickness;
+  const verticalOffset = (wallHeight - floorThickness) / 2;
+
   const directions = [
     {
       dx: 1,
       dy: 0,
-      size: [wallThickness, wallHeight, cellSize],
-      offset: [cellSize / 2, wallHeight / 2, 0]
+      size: [wallThickness, totalWallHeight, cellSize],
+      offset: [cellSize / 2, verticalOffset, 0]
     },
     {
       dx: -1,
       dy: 0,
-      size: [wallThickness, wallHeight, cellSize],
-      offset: [-cellSize / 2, wallHeight / 2, 0]
+      size: [wallThickness, totalWallHeight, cellSize],
+      offset: [-cellSize / 2, verticalOffset, 0]
     },
     {
       dx: 0,
       dy: 1,
-      size: [cellSize, wallHeight, wallThickness],
-      offset: [0, wallHeight / 2, cellSize / 2]
+      size: [cellSize, totalWallHeight, wallThickness],
+      offset: [0, verticalOffset, cellSize / 2]
     },
     {
       dx: 0,
       dy: -1,
-      size: [cellSize, wallHeight, wallThickness],
-      offset: [0, wallHeight / 2, -cellSize / 2]
+      size: [cellSize, totalWallHeight, wallThickness],
+      offset: [0, verticalOffset, -cellSize / 2]
     }
   ];
 
