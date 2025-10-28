@@ -112,7 +112,7 @@ export function createControlsPanel(params, callbacks) {
     .onFinishChange(callbacks.onChange);
   elevationFolder
     .add(params, "floors", 1, 5, 1)
-    .name("Floor Amount")
+    .name("Levels Amount")
     .onFinishChange(callbacks.onChange);
   elevationFolder.open();
 

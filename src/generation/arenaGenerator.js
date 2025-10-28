@@ -42,7 +42,7 @@ const STYLE_PROFILES = {
 export function generateArenaLayout(options) {
   const config = normalizeOptions(options);
   const floorThickness = config.floorThickness;
-  const levelSpacing = config.wallHeight;
+  const levelSpacing = config.wallHeight + config.floorThickness;
 
   const levels = [];
 
