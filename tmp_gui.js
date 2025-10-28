@@ -9,7 +9,8 @@ export const SYMMETRY_OPTIONS = {
   "Y+": "Y_POS",
   "Y-": "Y",
   "X+Y+": "XY_POS",
-  "X+Y-": "XY"
+  "X+Y-": "XY",
+  "X-Y+": "XY_NEG"
 };
 
 const GUI_FOLDER_STYLE_ID = "combat-arena-gui-folder-style";

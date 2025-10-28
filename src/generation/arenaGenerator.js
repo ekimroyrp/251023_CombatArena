@@ -106,7 +106,16 @@ function normalizeOptions(options) {
   const floors = baseFloors;
 
   const symmetryRaw = String(options.symmetry ?? "None").toUpperCase();
-  const allowedSym = new Set(["NONE", "X", "Y", "XY", "X_NEG", "Y_POS", "XY_POS"]);
+  const allowedSym = new Set([
+    "NONE",
+    "X",
+    "Y",
+    "XY",
+    "X_NEG",
+    "Y_POS",
+    "XY_POS",
+    "XY_NEG"
+  ]);
   const symmetry = allowedSym.has(symmetryRaw) ? symmetryRaw : "NONE";
 
   const rawSeed = clamp(Math.floor(options.seed ?? 0), 1, 1000);
@@ -577,10 +586,13 @@ function applySymmetry(levels, config) {
     config.symmetry === "X" ||
     config.symmetry === "XY" ||
     config.symmetry === "XY_POS";
-  const keepBottomHalf = config.symmetry === "X_NEG";
+  const keepBottomHalf =
+    config.symmetry === "X_NEG" || config.symmetry === "XY_NEG";
   const keepLeftHalf = config.symmetry === "Y" || config.symmetry === "XY";
   const keepRightHalf =
-    config.symmetry === "Y_POS" || config.symmetry === "XY_POS";
+    config.symmetry === "Y_POS" ||
+    config.symmetry === "XY_POS" ||
+    config.symmetry === "XY_NEG";
 
   for (const level of levels) {
     if (keepTopHalf) {
