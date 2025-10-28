@@ -143,12 +143,53 @@ export function createControlsPanel(params, callbacks) {
   displayFolder.open();
 
   const actionFolder = gui.addFolder("Save");
+  const savedStates = [];
+  const STATE_PLACEHOLDER = "Select State";
+  let isApplyingState = false;
+  const stateSelectorModel = { selectedState: STATE_PLACEHOLDER };
+  const getStateOptions = () => [
+    STATE_PLACEHOLDER,
+    ...savedStates.map((entry) => entry.label)
+  ];
+  let stateSelectorController = null;
+  const saveStateSnapshot = () => {
+    const snapshot = JSON.parse(JSON.stringify(params));
+    const label = `State ${savedStates.length + 1}`;
+    savedStates.push({ label, snapshot });
+    if (stateSelectorController) {
+      stateSelectorController.options(getStateOptions());
+      stateSelectorModel.selectedState = STATE_PLACEHOLDER;
+      stateSelectorController.updateDisplay();
+    }
+  };
   const saveActions = {
     image: () => callbacks.onExportImage?.(),
-    mesh: () => callbacks.onExport?.()
+    mesh: () => callbacks.onExport?.(),
+    state: () => saveStateSnapshot()
   };
   actionFolder.add(saveActions, "image").name("Image");
   actionFolder.add(saveActions, "mesh").name("Mesh");
+  actionFolder.add(saveActions, "state").name("State");
+  stateSelectorController = actionFolder
+    .add(stateSelectorModel, "selectedState", getStateOptions())
+    .name("Saved States")
+    .onChange((value) => {
+      if (isApplyingState || value === STATE_PLACEHOLDER) {
+        return;
+      }
+      const entry = savedStates.find((item) => item.label === value);
+      if (!entry) {
+        return;
+      }
+      isApplyingState = true;
+      const restored = JSON.parse(JSON.stringify(entry.snapshot));
+      Object.assign(params, restored);
+      gui.controllersRecursive().forEach((controller) => controller.updateDisplay());
+      callbacks.onChange?.();
+      stateSelectorModel.selectedState = STATE_PLACEHOLDER;
+      stateSelectorController.updateDisplay();
+      isApplyingState = false;
+    });
 
   return {
     gui,
