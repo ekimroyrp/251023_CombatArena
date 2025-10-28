@@ -578,7 +578,7 @@ function applySymmetry(levels, config) {
 
   for (const level of levels) {
     if (applyX) {
-      mirrorHorizontal(level.grid);
+      mirrorAcrossHorizontalAxis(level.grid);
     }
     if (applyY) {
       mirrorVertical(level.grid);
@@ -586,21 +586,27 @@ function applySymmetry(levels, config) {
   }
 }
 
-function mirrorHorizontal(grid) {
+function mirrorAcrossHorizontalAxis(grid) {
   const height = grid.length;
   const width = grid[0].length;
-  const original = grid.map((row) => row.map((cell) => cloneCell(cell)));
-  const limit = Math.ceil(height / 2);
+  if (height <= 1) {
+    return;
+  }
 
-  for (let y = 0; y < limit; y += 1) {
-    const mirrorY = height - 1 - y;
+  const source = grid.map((row) => row.map((cell) => cloneCell(cell)));
+  const hasCenterRow = height % 2 === 1;
+  const pivot = Math.floor(height / 2);
+  const startMirror = hasCenterRow ? pivot + 1 : pivot;
+
+  for (let y = startMirror; y < height; y += 1) {
+    const mirrorY = hasCenterRow
+      ? pivot - (y - pivot)
+      : pivot - 1 - (y - pivot);
+    if (mirrorY < 0 || mirrorY >= height) {
+      continue;
+    }
     for (let x = 0; x < width; x += 1) {
-      const combined = combineCells(original[y][x], original[mirrorY][x]);
-      grid[y][x] = combined;
-
-      if (mirrorY !== y) {
-        grid[mirrorY][x] = cloneCell(combined);
-      }
+      grid[y][x] = cloneCell(source[mirrorY][x]);
     }
   }
 }
