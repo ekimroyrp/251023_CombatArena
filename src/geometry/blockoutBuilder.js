@@ -4,7 +4,7 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 const DEFAULT_FLOOR_COLOR = 0x404040;
 const DEFAULT_WALL_COLOR = 0xffffff;
 const DEFAULT_COVER_COLOR = 0xff7b00;
-const DEFAULT_PLATFORM_COLOR = 0x787878;
+const DEFAULT_PLATFORM_COLOR = 0x89d7e1;
 
 export function buildBlockoutGroup(layout, colors = {}) {
   const group = new THREE.Group();
