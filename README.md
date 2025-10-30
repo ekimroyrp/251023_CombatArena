@@ -11,6 +11,7 @@ Procedural FPS arena blockout generator built with Three.js. The tool carves a g
 - Seeded random generation so layouts can be reproduced or rolled at will.
 - Cover percentage slider (with seed) to rough in inter-floor connectors.
 - Spawn placement slider that drops neon-green spawn markers (priority over cover) while keeping them spaced apart.
+- First Person View mode that locks the viewpoint into the arena with WASD movement, jumping, and ESC to return to orbit.
 - One-click OBJ export from the Actions panel for bringing blockouts into DCC tools or other engines.
 - Merged floor, wall, cover, and platform meshes to keep draw calls low while iterating.
 - Houdini-style infinite ground grid that respects the cell size and fades with distance for orientation.

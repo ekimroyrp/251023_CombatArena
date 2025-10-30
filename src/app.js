@@ -27,7 +27,7 @@ const DEFAULT_PARAMS = {
   corridorPaddingMax: 1,
   corridorSeed: 1,
   coverProbability: 0,
-  wallHeight: 4,
+  wallHeight: 6,
   wallThickness: 0.5,
   floorThickness: 0.25,
   platforms: 0,
@@ -262,10 +262,10 @@ function setupFirstPerson(state) {
     canJump: true,
     cameraHeight: FIRST_PERSON_CAMERA_HEIGHT,
     baseHeight: 0,
-    acceleration: 40,
+    acceleration: 80,
     damping: 12,
-    gravity: 30,
-    jumpVelocity: 5.5
+    gravity: 15,
+    jumpVelocity: 7
   };
 
   const movementKeys = new Set([
