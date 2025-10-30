@@ -273,7 +273,7 @@ function addWallsForLevel({
       let dir = 0;
 
       if (topOpen !== bottomOpen) {
-        dir = topOpen ? -1 : 1;
+        dir = topOpen ? 1 : -1;
       }
 
       if (dir !== 0) {
