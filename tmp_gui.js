@@ -72,6 +72,13 @@ export function createControlsPanel(params, callbacks) {
     .onFinishChange(callbacks.onChange);
   plansFolder.open();
 
+  const wallsFolder = gui.addFolder("Walls");
+  wallsFolder
+    .add(params, "wallHeight", 1, 12, 0.5)
+    .name("Wall Height")
+    .onFinishChange(callbacks.onChange);
+  wallsFolder.open();
+
   const roomsFolder = gui.addFolder("Rooms");
   roomsFolder
     .add(params, "roomSizeMin", 3, 24, 1)
@@ -126,10 +133,6 @@ export function createControlsPanel(params, callbacks) {
   platformsFolder.open();
 
   const levelsFolder = gui.addFolder("Levels");
-  levelsFolder
-    .add(params, "wallHeight", 1, 12, 0.5)
-    .name("Wall Height")
-    .onFinishChange(callbacks.onChange);
   levelsFolder
     .add(params, "floors", 1, 5, 1)
     .name("Levels Amount")
@@ -243,4 +246,3 @@ export function createControlsPanel(params, callbacks) {
     seedController
   };
 }
-
