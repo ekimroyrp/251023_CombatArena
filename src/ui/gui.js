@@ -44,15 +44,15 @@ export function createControlsPanel(params, callbacks) {
   const plansFolder = gui.addFolder("Plans");
   plansFolder
     .add(params, "type", TYPE_OPTIONS)
-    .name("Layout Style")
+    .name("Plan Style")
     .onFinishChange(callbacks.onChange);
   plansFolder
     .add(params, "symmetry", SYMMETRY_OPTIONS)
-    .name("Layout Symmetry")
+    .name("Plan Symmetry")
     .onFinishChange(callbacks.onChange);
   const seedController = plansFolder
     .add(params, "seed", 1, 1000, 1)
-    .name("Layout Seed")
+    .name("Plan Seed")
     .onFinishChange(callbacks.onChange);
   plansFolder
     .add(params, "cellSize", 1, 8, 0.5)
