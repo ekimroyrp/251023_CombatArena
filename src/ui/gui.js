@@ -147,6 +147,13 @@ export function createControlsPanel(params, callbacks) {
     .onFinishChange(callbacks.onChange);
   propsFolder.open();
 
+  const spawnFolder = gui.addFolder("Spawn");
+  spawnFolder
+    .add(params, "spawnAmount", 0, 50, 1)
+    .name("Spawn Amount")
+    .onFinishChange(callbacks.onChange);
+  spawnFolder.open();
+
   const displayFolder = gui.addFolder("Display");
   displayFolder
     .addColor(params, "floorColor")

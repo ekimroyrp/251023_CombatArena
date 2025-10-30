@@ -45,6 +45,7 @@ export function generateArenaLayout(options) {
   const levelSpacing = config.wallHeight + config.floorThickness;
 
   const levels = [];
+  let remainingSpawns = config.spawnAmount;
 
   for (let levelIndex = 0; levelIndex < config.floors; levelIndex += 1) {
     const levelSeed = `${config.seed}-L${levelIndex}`;
@@ -67,6 +68,26 @@ export function generateArenaLayout(options) {
       `${config.seed}-platform-${config.platformSeed}-L${levelIndex}`
     );
     const platformCount = buildPlatforms(grid, config, platformRng);
+    let availableCells = 0;
+    for (let y = 0; y < grid.length; y += 1) {
+      for (let x = 0; x < grid[y].length; x += 1) {
+        const cell = grid[y][x];
+        if (!cell.solid) {
+          availableCells += 1;
+        }
+      }
+    }
+    const levelsRemaining = config.floors - levelIndex;
+    const targetSpawns = Math.min(
+      remainingSpawns,
+      availableCells
+    );
+    let spawnForLevel = levelsRemaining > 0
+      ? Math.min(targetSpawns, Math.ceil(remainingSpawns / levelsRemaining))
+      : targetSpawns;
+    spawnForLevel = Math.max(0, spawnForLevel);
+    const spawnPlaced = placeSpawnPoints(grid, spawnForLevel, levelRng);
+    remainingSpawns = Math.max(0, remainingSpawns - spawnPlaced);
 
     levels.push({
       index: levelIndex,
@@ -107,6 +128,7 @@ function normalizeOptions(options) {
   const effectiveRoomSizeMax = Math.min(roomSizeMax, width - 2, height - 2);
   const effectiveRoomSizeMin = Math.min(roomSizeMin, effectiveRoomSizeMax);
   const maxRoomSize = effectiveRoomSizeMax;
+  const spawnAmount = clamp(Math.floor(options.spawnAmount ?? 4), 0, 50);
 
   const type = options.type ?? "Halo";
   const styleProfile = STYLE_PROFILES[type] ?? STYLE_PROFILES.Halo;
@@ -193,6 +215,7 @@ function normalizeOptions(options) {
     roomSizeMin: effectiveRoomSizeMin,
     roomSizeMax: effectiveRoomSizeMax,
     roomSizeSeed: String(roomSizeSeed),
+    spawnAmount,
     floorThickness,
     platformThickness,
     symmetry,
@@ -220,7 +243,8 @@ function createGrid(width, height) {
       cover: false,
       rampUp: false,
       rampDown: false,
-      platformId: null
+      platformId: null,
+      spawn: false
     }))
   );
 }
@@ -513,6 +537,69 @@ function buildPlatforms(grid, config, rng) {
   return built;
 }
 
+function placeSpawnPoints(grid, desiredCount, rng) {
+  if (desiredCount <= 0) {
+    return 0;
+  }
+
+  const height = grid.length;
+  const width = grid[0].length;
+  const candidates = [];
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const cell = grid[y][x];
+      if (cell.solid) {
+        continue;
+      }
+      candidates.push({ x, y });
+    }
+  }
+
+  if (candidates.length === 0) {
+    return 0;
+  }
+
+  const rngFn = typeof rng === "function" ? rng : Math.random;
+  shuffleInPlace(candidates, rngFn);
+
+  const chosen = [];
+
+  for (const candidate of candidates) {
+    let tooClose = false;
+    for (const pick of chosen) {
+      const dx = Math.abs(candidate.x - pick.x);
+      const dy = Math.abs(candidate.y - pick.y);
+      if (Math.max(dx, dy) <= 1) {
+        tooClose = true;
+        break;
+      }
+    }
+
+    if (tooClose) {
+      continue;
+    }
+
+    const cell = grid[candidate.y][candidate.x];
+    if (cell.spawn) {
+      continue;
+    }
+
+    cell.spawn = true;
+    if (cell.cover) {
+      cell.cover = false;
+    }
+
+    chosen.push(candidate);
+
+    if (chosen.length >= desiredCount) {
+      break;
+    }
+  }
+
+  return chosen.length;
+}
+
 function determinePlatformSize(grid, config, rng) {
   const area = grid.length * grid[0].length;
   const maxRoom = config.maxRoomSize;
@@ -758,7 +845,8 @@ function cloneCell(cell) {
     cover: cell.cover,
     rampUp: cell.rampUp,
     rampDown: cell.rampDown,
-    platformId: cell.platformId
+    platformId: cell.platformId,
+    spawn: cell.spawn
   };
 }
 
@@ -773,6 +861,7 @@ function clamp(value, min, max) {
 function clamp01(value) {
   return clamp(value, 0, 1);
 }
+
 
 
 

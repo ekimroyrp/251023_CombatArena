@@ -5,6 +5,7 @@ const DEFAULT_FLOOR_COLOR = 0x404040;
 const DEFAULT_WALL_COLOR = 0xffffff;
 const DEFAULT_COVER_COLOR = 0xff7b00;
 const DEFAULT_PLATFORM_COLOR = 0x89d7e1;
+const DEFAULT_SPAWN_COLOR = 0x59ff00;
 
 export function buildBlockoutGroup(layout, colors = {}) {
   const group = new THREE.Group();
@@ -14,6 +15,7 @@ export function buildBlockoutGroup(layout, colors = {}) {
   const wallGeometries = [];
   const coverGeometries = [];
   const platformGeometries = [];
+  const spawnGeometries = [];
 
   const { cellSize, wallHeight, floorThickness, platformThickness, levels } = layout;
   const floorColor = new THREE.Color(colors.floorColor ?? DEFAULT_FLOOR_COLOR);
@@ -22,6 +24,7 @@ export function buildBlockoutGroup(layout, colors = {}) {
   const platformColor = new THREE.Color(
     colors.platformColor ?? DEFAULT_PLATFORM_COLOR
   );
+  const spawnColor = new THREE.Color(DEFAULT_SPAWN_COLOR);
 
   const effectivePlatformThickness = Math.max(
     0.001,
@@ -76,6 +79,17 @@ export function buildBlockoutGroup(layout, colors = {}) {
           coverGeometries.push(cover);
         }
 
+        if (cell.spawn) {
+          const spawnHeight = 0.5;
+          const spawn = new THREE.BoxGeometry(
+            cellSize * 0.6,
+            spawnHeight,
+            cellSize * 0.6
+          );
+          spawn.translate(wx, floorY + spawnHeight / 2, wz);
+          spawnGeometries.push(spawn);
+        }
+
         if (cell.platformId !== null) {
           const platformHeight = effectivePlatformThickness;
           const platform = new THREE.BoxGeometry(
@@ -106,6 +120,11 @@ export function buildBlockoutGroup(layout, colors = {}) {
     group,
     coverGeometries,
     new THREE.MeshStandardMaterial({ color: coverColor, roughness: 0.4 })
+  );
+  addMergedMesh(
+    group,
+    spawnGeometries,
+    new THREE.MeshStandardMaterial({ color: spawnColor, roughness: 0.4 })
   );
   addMergedMesh(
     group,

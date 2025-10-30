@@ -31,6 +31,7 @@ const DEFAULT_PARAMS = {
   platforms: 0,
   platformSeed: 1,
   platformThickness: 0.25,
+  spawnAmount: 4,
   symmetry: "None",
   floorColor: "#404040",
   wallColor: "#ffffff",
