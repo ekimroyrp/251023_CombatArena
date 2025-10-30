@@ -212,7 +212,7 @@ function normalizeOptions(options) {
   const corridorPaddingMax = Math.max(corridorPaddingMinRaw, corridorPaddingMaxRaw);
   const corridorSeed = clamp(Math.floor(options.corridorSeed ?? 1), 0, 1000);
   const wallHeight = clamp(
-    Number.isFinite(options.wallHeight) ? options.wallHeight : 2,
+    Number.isFinite(options.wallHeight) ? options.wallHeight : 4,
     1,
     16
   );
@@ -224,7 +224,7 @@ function normalizeOptions(options) {
     styleProfile,
     width,
     height,
-    cellSize: clamp(options.cellSize ?? 4, 1, 10),
+    cellSize: clamp(options.cellSize ?? 2, 1, 10),
     rooms,
     floors,
     platformsPerFloor,

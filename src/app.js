@@ -15,7 +15,7 @@ const DEFAULT_PARAMS = {
   type: "Halo",
   gridWidth: 30,
   gridHeight: 38,
-  cellSize: 1,
+  cellSize: 2,
   floors: 1,
   rooms: 10,
   roomSizeMin: 4,
@@ -27,7 +27,7 @@ const DEFAULT_PARAMS = {
   corridorPaddingMax: 1,
   corridorSeed: 1,
   coverProbability: 0,
-  wallHeight: 3,
+  wallHeight: 4,
   wallThickness: 0.5,
   floorThickness: 0.25,
   platforms: 0,
@@ -46,7 +46,7 @@ const DEFAULT_PARAMS = {
   gridColor: "#969696"
 };
 
-const FIRST_PERSON_CAMERA_HEIGHT = 1.5;
+const FIRST_PERSON_CAMERA_HEIGHT = 1;
 
 export function initApp(container) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
@@ -244,7 +244,7 @@ function setupFirstPerson(state) {
     acceleration: 40,
     damping: 12,
     gravity: 30,
-    jumpVelocity: 7
+    jumpVelocity: 5.5
   };
 
   const movementKeys = new Set([

@@ -171,30 +171,10 @@ function addWallsForCell({
   const verticalOffset = (wallHeight - floorThickness) / 2;
 
   const directions = [
-    {
-      dx: 1,
-      dy: 0,
-      size: [wallThickness, totalWallHeight, cellSize],
-      offset: [cellSize / 2, verticalOffset, 0]
-    },
-    {
-      dx: -1,
-      dy: 0,
-      size: [wallThickness, totalWallHeight, cellSize],
-      offset: [-cellSize / 2, verticalOffset, 0]
-    },
-    {
-      dx: 0,
-      dy: 1,
-      size: [cellSize, totalWallHeight, wallThickness],
-      offset: [0, verticalOffset, cellSize / 2]
-    },
-    {
-      dx: 0,
-      dy: -1,
-      size: [cellSize, totalWallHeight, wallThickness],
-      offset: [0, verticalOffset, -cellSize / 2]
-    }
+    { dx: 1, dy: 0 },
+    { dx: -1, dy: 0 },
+    { dx: 0, dy: 1 },
+    { dx: 0, dy: -1 }
   ];
 
   for (const dir of directions) {
@@ -207,15 +187,23 @@ function addWallsForCell({
       continue;
     }
 
+    const isEastWest = dir.dx !== 0;
+    const wallWidth = isEastWest ? wallThickness : cellSize;
+    const wallDepth = isEastWest ? cellSize : wallThickness;
+    const outwardOffset =
+      (cellSize / 2 + wallThickness / 2) * (isEastWest ? dir.dx : dir.dy);
+    const offsetX = isEastWest ? outwardOffset : 0;
+    const offsetZ = isEastWest ? 0 : outwardOffset;
+
     const wall = new THREE.BoxGeometry(
-      dir.size[0],
-      dir.size[1],
-      dir.size[2]
+      wallWidth,
+      totalWallHeight,
+      wallDepth
     );
     wall.translate(
-      wx + dir.offset[0],
-      baseElevation + dir.offset[1],
-      wz + dir.offset[2]
+      wx + offsetX,
+      baseElevation + verticalOffset,
+      wz + offsetZ
     );
     wallGeometries.push(wall);
   }
