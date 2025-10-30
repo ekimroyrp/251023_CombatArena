@@ -69,22 +69,6 @@ export function buildBlockoutGroup(layout, colors = {}) {
         floor.translate(wx, floorY - floorThickness / 2, wz);
         floorGeometries.push(floor);
 
-        addWallsForCell({
-          x,
-          y,
-          wx,
-          wz,
-          grid: level.grid,
-          width: level.width,
-          height: level.height,
-          wallThickness,
-          wallHeight,
-          floorThickness,
-          cellSize,
-          baseElevation: floorY,
-          wallGeometries
-        });
-
         if (cell.cover) {
           const coverHeight = 0.5;
           const cover = new THREE.BoxGeometry(
@@ -121,6 +105,18 @@ export function buildBlockoutGroup(layout, colors = {}) {
         }
       }
     }
+
+    addWallsForLevel({
+      grid: level.grid,
+      width: level.width,
+      height: level.height,
+      wallThickness,
+      wallHeight,
+      floorThickness,
+      cellSize,
+      baseElevation: floorY,
+      wallGeometries
+    });
   }
 
   addMergedMesh(
@@ -157,11 +153,7 @@ export function buildBlockoutGroup(layout, colors = {}) {
   return group;
 }
 
-function addWallsForCell({
-  x,
-  y,
-  wx,
-  wz,
+function addWallsForLevel({
   grid,
   width,
   height,
@@ -174,43 +166,152 @@ function addWallsForCell({
 }) {
   const totalWallHeight = wallHeight + floorThickness;
   const verticalOffset = (wallHeight - floorThickness) / 2;
+  const halfWidth = (width * cellSize) / 2;
+  const halfHeight = (height * cellSize) / 2;
 
-  const directions = [
-    { dx: 1, dy: 0 },
-    { dx: -1, dy: 0 },
-    { dx: 0, dy: 1 },
-    { dx: 0, dy: -1 }
-  ];
+  const emitSegment = ({
+    alongX,
+    startIndex,
+    length,
+    boundaryCoord,
+    direction
+  }) => {
+    if (length <= 0) {
+      return;
+    }
+    const wallLength = length * cellSize;
+    const centerY = baseElevation + verticalOffset;
+    if (alongX) {
+      const startX = startIndex * cellSize - halfWidth;
+      const centerX = startX + wallLength / 2;
+      const centerZ = boundaryCoord + direction * (wallThickness / 2);
+      const wall = new THREE.BoxGeometry(
+        wallLength,
+        totalWallHeight,
+        wallThickness
+      );
+      wall.translate(centerX, centerY, centerZ);
+      wallGeometries.push(wall);
+    } else {
+      const startZ = startIndex * cellSize - halfHeight;
+      const centerZ = startZ + wallLength / 2;
+      const centerX = boundaryCoord + direction * (wallThickness / 2);
+      const wall = new THREE.BoxGeometry(
+        wallThickness,
+        totalWallHeight,
+        wallLength
+      );
+      wall.translate(centerX, centerY, centerZ);
+      wallGeometries.push(wall);
+    }
+  };
 
-  for (const dir of directions) {
-    const nx = x + dir.dx;
-    const ny = y + dir.dy;
-    const neighborSolid =
-      nx < 0 || nx >= width || ny < 0 || ny >= height || grid[ny][nx].solid;
+  // Walls parallel to Z axis (between columns)
+  for (let xEdge = 0; xEdge <= width; xEdge += 1) {
+    let runStart = null;
+    let runDir = 0;
 
-    if (!neighborSolid) {
-      continue;
+    for (let y = 0; y < height; y += 1) {
+      const leftCell = xEdge > 0 ? grid[y][xEdge - 1] : null;
+      const rightCell = xEdge < width ? grid[y][xEdge] : null;
+      const leftOpen = leftCell ? !leftCell.solid : false;
+      const rightOpen = rightCell ? !rightCell.solid : false;
+      let dir = 0;
+
+      if (leftOpen !== rightOpen) {
+        dir = leftOpen ? 1 : -1;
+      }
+
+      if (dir !== 0) {
+        if (runStart === null || runDir !== dir) {
+          if (runStart !== null) {
+            emitSegment({
+              alongX: false,
+              startIndex: runStart,
+              length: y - runStart,
+              boundaryCoord: xEdge * cellSize - halfWidth,
+              direction: runDir
+            });
+          }
+          runStart = y;
+          runDir = dir;
+        }
+      } else if (runStart !== null) {
+        emitSegment({
+          alongX: false,
+          startIndex: runStart,
+          length: y - runStart,
+          boundaryCoord: xEdge * cellSize - halfWidth,
+          direction: runDir
+        });
+        runStart = null;
+        runDir = 0;
+      }
     }
 
-    const isEastWest = dir.dx !== 0;
-    const wallWidth = isEastWest ? wallThickness : cellSize;
-    const wallDepth = isEastWest ? cellSize : wallThickness;
-    const outwardOffset =
-      (cellSize / 2 + wallThickness / 2) * (isEastWest ? dir.dx : dir.dy);
-    const offsetX = isEastWest ? outwardOffset : 0;
-    const offsetZ = isEastWest ? 0 : outwardOffset;
+    if (runStart !== null) {
+      emitSegment({
+        alongX: false,
+        startIndex: runStart,
+        length: height - runStart,
+        boundaryCoord: xEdge * cellSize - halfWidth,
+        direction: runDir
+      });
+    }
+  }
 
-    const wall = new THREE.BoxGeometry(
-      wallWidth,
-      totalWallHeight,
-      wallDepth
-    );
-    wall.translate(
-      wx + offsetX,
-      baseElevation + verticalOffset,
-      wz + offsetZ
-    );
-    wallGeometries.push(wall);
+  // Walls parallel to X axis (between rows)
+  for (let yEdge = 0; yEdge <= height; yEdge += 1) {
+    let runStart = null;
+    let runDir = 0;
+
+    for (let x = 0; x < width; x += 1) {
+      const topCell = yEdge > 0 ? grid[yEdge - 1][x] : null;
+      const bottomCell = yEdge < height ? grid[yEdge][x] : null;
+      const topOpen = topCell ? !topCell.solid : false;
+      const bottomOpen = bottomCell ? !bottomCell.solid : false;
+      let dir = 0;
+
+      if (topOpen !== bottomOpen) {
+        dir = topOpen ? -1 : 1;
+      }
+
+      if (dir !== 0) {
+        if (runStart === null || runDir !== dir) {
+          if (runStart !== null) {
+            emitSegment({
+              alongX: true,
+              startIndex: runStart,
+              length: x - runStart,
+              boundaryCoord: yEdge * cellSize - halfHeight,
+              direction: runDir
+            });
+          }
+          runStart = x;
+          runDir = dir;
+        }
+      } else if (runStart !== null) {
+        emitSegment({
+          alongX: true,
+          startIndex: runStart,
+          length: x - runStart,
+          boundaryCoord: yEdge * cellSize - halfHeight,
+          direction: runDir
+        });
+        runStart = null;
+        runDir = 0;
+      }
+    }
+
+    if (runStart !== null) {
+      emitSegment({
+        alongX: true,
+        startIndex: runStart,
+        length: width - runStart,
+        boundaryCoord: yEdge * cellSize - halfHeight,
+        direction: runDir
+      });
+    }
   }
 }
 
