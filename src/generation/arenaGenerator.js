@@ -575,7 +575,7 @@ function placeSpawnPoints(grid, desiredCount, rng) {
     for (const pick of chosen) {
       const dx = Math.abs(candidate.x - pick.x);
       const dy = Math.abs(candidate.y - pick.y);
-      if (Math.max(dx, dy) <= 1) {
+      if (Math.max(dx, dy) < 5) {
         tooClose = true;
         break;
       }
