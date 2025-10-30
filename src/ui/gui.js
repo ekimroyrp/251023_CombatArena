@@ -139,11 +139,11 @@ export function createControlsPanel(params, callbacks) {
   const levelsFolder = gui.addFolder("Levels");
   levelsFolder
     .add(params, "floors", 1, 5, 1)
-    .name("Levels Amount")
+    .name("Level Amount")
     .onFinishChange(callbacks.onChange);
   levelsFolder.open();
 
-  const propsFolder = gui.addFolder("Cover");
+  const propsFolder = gui.addFolder("Covers");
   propsFolder
     .add(params, "coverProbability", 0, 50, 1)
     .name("Cover Percentage")
@@ -154,7 +154,7 @@ export function createControlsPanel(params, callbacks) {
     .onFinishChange(callbacks.onChange);
   propsFolder.open();
 
-  const spawnFolder = gui.addFolder("Spawn");
+  const spawnFolder = gui.addFolder("Spawns");
   spawnFolder
     .add(params, "spawnAmount", 0, 50, 1)
     .name("Spawn Amount")
