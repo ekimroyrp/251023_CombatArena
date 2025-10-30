@@ -68,6 +68,9 @@ export function generateArenaLayout(options) {
       `${config.seed}-platform-${config.platformSeed}-L${levelIndex}`
     );
     const platformCount = buildPlatforms(grid, config, platformRng);
+    const spawnRng = createRng(
+      `${config.seed}-spawn-${config.spawnSeed}-L${levelIndex}`
+    );
     let availableCells = 0;
     for (let y = 0; y < grid.length; y += 1) {
       for (let x = 0; x < grid[y].length; x += 1) {
@@ -86,7 +89,7 @@ export function generateArenaLayout(options) {
       ? Math.min(targetSpawns, Math.ceil(remainingSpawns / levelsRemaining))
       : targetSpawns;
     spawnForLevel = Math.max(0, spawnForLevel);
-    const spawnPlaced = placeSpawnPoints(grid, spawnForLevel, levelRng);
+    const spawnPlaced = placeSpawnPoints(grid, spawnForLevel, spawnRng);
     remainingSpawns = Math.max(0, remainingSpawns - spawnPlaced);
 
     levels.push({
@@ -129,6 +132,7 @@ function normalizeOptions(options) {
   const effectiveRoomSizeMin = Math.min(roomSizeMin, effectiveRoomSizeMax);
   const maxRoomSize = effectiveRoomSizeMax;
   const spawnAmount = clamp(Math.floor(options.spawnAmount ?? 4), 0, 50);
+  const spawnSeed = clamp(Math.floor(options.spawnSeed ?? 1), 1, 1000);
 
   const type = options.type ?? "Halo";
   const styleProfile = STYLE_PROFILES[type] ?? STYLE_PROFILES.Halo;
@@ -216,6 +220,7 @@ function normalizeOptions(options) {
     roomSizeMax: effectiveRoomSizeMax,
     roomSizeSeed: String(roomSizeSeed),
     spawnAmount,
+    spawnSeed,
     floorThickness,
     platformThickness,
     symmetry,

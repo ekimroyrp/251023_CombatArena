@@ -144,6 +144,10 @@ export function createControlsPanel(params, callbacks) {
     .add(params, "spawnAmount", 0, 50, 1)
     .name("Spawn Amount")
     .onFinishChange(callbacks.onChange);
+  spawnFolder
+    .add(params, "spawnSeed", 1, 1000, 1)
+    .name("Spawn Seed")
+    .onFinishChange(callbacks.onChange);
   spawnFolder.open();
 
   const displayFolder = gui.addFolder("Display");
