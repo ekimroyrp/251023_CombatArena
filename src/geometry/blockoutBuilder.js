@@ -126,27 +126,32 @@ export function buildBlockoutGroup(layout, colors = {}) {
   addMergedMesh(
     group,
     floorGeometries,
-    new THREE.MeshStandardMaterial({ color: floorColor, roughness: 0.8 })
+    new THREE.MeshStandardMaterial({ color: floorColor, roughness: 0.85 }),
+    { receiveShadow: true }
   );
   addMergedMesh(
     group,
     wallGeometries,
-    new THREE.MeshStandardMaterial({ color: wallColor, roughness: 0.5 })
+    new THREE.MeshStandardMaterial({ color: wallColor, roughness: 0.55 }),
+    { castShadow: true, receiveShadow: true }
   );
   addMergedMesh(
     group,
     coverGeometries,
-    new THREE.MeshStandardMaterial({ color: coverColor, roughness: 0.4 })
+    new THREE.MeshStandardMaterial({ color: coverColor, roughness: 0.45 }),
+    { castShadow: true, receiveShadow: true }
   );
   addMergedMesh(
     group,
     spawnGeometries,
-    new THREE.MeshStandardMaterial({ color: spawnColor, roughness: 0.4 })
+    new THREE.MeshStandardMaterial({ color: spawnColor, roughness: 0.4 }),
+    { castShadow: true, receiveShadow: true }
   );
   addMergedMesh(
     group,
     platformGeometries,
-    new THREE.MeshStandardMaterial({ color: platformColor, roughness: 0.5 })
+    new THREE.MeshStandardMaterial({ color: platformColor, roughness: 0.5 }),
+    { castShadow: true, receiveShadow: true }
   );
 
   return group;
@@ -209,7 +214,7 @@ function addWallsForCell({
   }
 }
 
-function addMergedMesh(group, geometries, material) {
+function addMergedMesh(group, geometries, material, options = {}) {
   if (geometries.length === 0) {
     material.dispose();
     return;
@@ -224,5 +229,7 @@ function addMergedMesh(group, geometries, material) {
   }
 
   const mesh = new THREE.Mesh(merged, material);
+  mesh.castShadow = Boolean(options.castShadow);
+  mesh.receiveShadow = Boolean(options.receiveShadow);
   group.add(mesh);
 }

@@ -52,7 +52,8 @@ export function initApp(container) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.shadowMap.enabled = false;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.domElement.tabIndex = -1;
   container.appendChild(renderer.domElement);
 
@@ -71,12 +72,32 @@ export function initApp(container) {
   controls.enableDamping = true;
   controls.target.set(0, 0, 0);
 
-  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x101018, 0.6);
+  const ambientLight = new THREE.AmbientLight(0x2a2833, 0.35);
+  scene.add(ambientLight);
+
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x101018, 0.45);
   scene.add(hemiLight);
 
-  const keyLight = new THREE.DirectionalLight(0xffffff, 1.0);
-  keyLight.position.set(30, 50, 10);
+  const keyLight = new THREE.DirectionalLight(0xf5f2e8, 1.2);
+  keyLight.position.set(60, 80, 30);
+  keyLight.castShadow = true;
+  keyLight.shadow.mapSize.set(2048, 2048);
+  keyLight.shadow.camera.near = 5;
+  keyLight.shadow.camera.far = 200;
+  const shadowVolume = 120;
+  keyLight.shadow.camera.left = -shadowVolume;
+  keyLight.shadow.camera.right = shadowVolume;
+  keyLight.shadow.camera.top = shadowVolume;
+  keyLight.shadow.camera.bottom = -shadowVolume;
+  keyLight.shadow.bias = -0.0005;
+  keyLight.shadow.normalBias = 0.02;
+  keyLight.target.position.set(0, 0, 0);
   scene.add(keyLight);
+  scene.add(keyLight.target);
+
+  const rimLight = new THREE.DirectionalLight(0x6caeff, 0.25);
+  rimLight.position.set(-50, 40, -60);
+  scene.add(rimLight);
 
   const stats = new Stats();
   stats.showPanel(0);
