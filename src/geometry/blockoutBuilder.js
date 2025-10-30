@@ -17,7 +17,14 @@ export function buildBlockoutGroup(layout, colors = {}) {
   const platformGeometries = [];
   const spawnGeometries = [];
 
-  const { cellSize, wallHeight, floorThickness, platformThickness, levels } = layout;
+  const {
+    cellSize,
+    wallHeight,
+    wallThickness: wallThicknessParam,
+    floorThickness,
+    platformThickness,
+    levels
+  } = layout;
   const floorColor = new THREE.Color(colors.floorColor ?? DEFAULT_FLOOR_COLOR);
   const wallColor = new THREE.Color(colors.wallColor ?? DEFAULT_WALL_COLOR);
   const coverColor = new THREE.Color(colors.coverColor ?? DEFAULT_COVER_COLOR);
@@ -33,7 +40,15 @@ export function buildBlockoutGroup(layout, colors = {}) {
     Math.min(platformThickness ?? floorThickness, 10)
   );
 
-  const wallThickness = Math.max(0.4, cellSize * 0.2);
+  const wallThickness = Math.max(
+    0.1,
+    Math.min(
+      Number.isFinite(wallThicknessParam)
+        ? wallThicknessParam
+        : Math.max(0.4, cellSize * 0.2),
+      10
+    )
+  );
 
   for (const level of levels) {
     const halfWidth = (level.width * cellSize) / 2;

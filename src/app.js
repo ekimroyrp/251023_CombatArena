@@ -27,6 +27,7 @@ const DEFAULT_PARAMS = {
   corridorSeed: 1,
   coverProbability: 0,
   wallHeight: 3,
+  wallThickness: 0.5,
   floorThickness: 0.25,
   platforms: 0,
   platformSeed: 1,

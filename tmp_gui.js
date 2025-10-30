@@ -77,6 +77,10 @@ export function createControlsPanel(params, callbacks) {
     .add(params, "wallHeight", 1, 12, 0.5)
     .name("Wall Height")
     .onFinishChange(callbacks.onChange);
+  wallsFolder
+    .add(params, "wallThickness", 0.25, 10, 0.25)
+    .name("Wall Thickness")
+    .onFinishChange(callbacks.onChange);
   wallsFolder.open();
 
   const roomsFolder = gui.addFolder("Rooms");

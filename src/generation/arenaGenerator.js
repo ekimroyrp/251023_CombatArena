@@ -108,6 +108,7 @@ export function generateArenaLayout(options) {
   return {
     cellSize: config.cellSize,
     wallHeight: config.wallHeight,
+    wallThickness: config.wallThickness,
     floorThickness,
     platformThickness: config.platformThickness,
     levelSpacing,
@@ -168,6 +169,13 @@ function normalizeOptions(options) {
     0.25,
     10
   );
+  const wallThickness = clamp(
+    Number.isFinite(options.wallThickness)
+      ? options.wallThickness
+      : 0.5,
+    0.25,
+    10
+  );
   const platformThickness = clamp(
     Number.isFinite(options.platformThickness) ? options.platformThickness : 0.25,
     0.25,
@@ -203,6 +211,11 @@ function normalizeOptions(options) {
   const corridorPaddingMin = Math.min(corridorPaddingMinRaw, corridorPaddingMaxRaw);
   const corridorPaddingMax = Math.max(corridorPaddingMinRaw, corridorPaddingMaxRaw);
   const corridorSeed = clamp(Math.floor(options.corridorSeed ?? 1), 0, 1000);
+  const wallHeight = clamp(
+    Number.isFinite(options.wallHeight) ? options.wallHeight : 2,
+    1,
+    16
+  );
 
   return {
     seed: String(rawSeed),
@@ -222,6 +235,7 @@ function normalizeOptions(options) {
     spawnAmount,
     spawnSeed,
     floorThickness,
+    wallThickness,
     platformThickness,
     symmetry,
     maxRoomSize: Math.min(maxRoomSize, width - 2, height - 2),
@@ -236,7 +250,7 @@ function normalizeOptions(options) {
     rectangularity: Math.max(1, styleProfile.rectangularity ?? 1),
     atriumChance: clamp01(styleProfile.atriumChance ?? 0),
     coverProbability,
-    wallHeight: clamp(options.wallHeight ?? 2, 1, 16),
+    wallHeight,
     loopFactor: Math.max(0, styleProfile.loopFactor ?? 1)
   };
 }
