@@ -194,6 +194,10 @@ export function createControlsPanel(params, callbacks) {
     .addColor(params, "gridColor")
     .name("Grid Color")
     .onFinishChange(callbacks.onChange);
+  const displayActions = {
+    firstPerson: () => callbacks.onEnterFirstPerson?.()
+  };
+  displayFolder.add(displayActions, "firstPerson").name("First Person View");
   displayFolder.open();
 
   const actionFolder = gui.addFolder("Save");

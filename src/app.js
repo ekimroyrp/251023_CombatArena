@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls.js";
 import Stats from "stats.js";
 
 import { createControlsPanel } from "./ui/gui.js";
@@ -45,11 +46,14 @@ const DEFAULT_PARAMS = {
   gridColor: "#969696"
 };
 
+const FIRST_PERSON_CAMERA_HEIGHT = 1.5;
+
 export function initApp(container) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled = false;
+  renderer.domElement.tabIndex = -1;
   container.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
@@ -87,10 +91,15 @@ export function initApp(container) {
     controls,
     stats,
     params,
+    clock: new THREE.Clock(),
+    firstPerson: null,
+    orbitSnapshot: null,
+    gui: null,
     currentArena: null,
     groundGrid: createGroundGrid(params.cellSize, params.gridColor)
   };
   state.scene.add(state.groundGrid.mesh);
+  setupFirstPerson(state);
 
   const controlsPanel = createControlsPanel(params, {
     onChange: () => rebuildArena(state),
@@ -110,9 +119,11 @@ export function initApp(container) {
         .concat(".obj");
 
       exportBlockoutOBJ(state.currentArena, filename);
-    }
+    },
+    onEnterFirstPerson: () => enterFirstPerson(state)
   });
   seedController = controlsPanel.seedController;
+  state.gui = controlsPanel.gui;
 
   window.addEventListener("resize", () => onWindowResize(state));
 
@@ -143,11 +154,16 @@ function rebuildArena(state) {
 }
 
 function animate(state) {
+  requestAnimationFrame(() => animate(state));
+  const delta = state.clock.getDelta();
   state.stats.begin();
-  state.controls.update();
+  if (state.firstPerson?.isActive) {
+    updateFirstPerson(state, delta);
+  } else {
+    state.controls.update();
+  }
   state.renderer.render(state.scene, state.camera);
   state.stats.end();
-  requestAnimationFrame(() => animate(state));
 }
 
 function onWindowResize(state) {
@@ -206,4 +222,325 @@ function exportViewportImage(state) {
   } else {
     downloadFromDataUrl();
   }
+}
+
+function setupFirstPerson(state) {
+  const controls = new PointerLockControls(state.camera, state.renderer.domElement);
+
+  const firstPerson = {
+    controls,
+    isActive: false,
+    awaitingLock: false,
+    pendingSpawn: null,
+    velocity: new THREE.Vector3(),
+    direction: new THREE.Vector3(),
+    moveForward: false,
+    moveBackward: false,
+    moveLeft: false,
+    moveRight: false,
+    canJump: true,
+    cameraHeight: FIRST_PERSON_CAMERA_HEIGHT,
+    baseHeight: 0,
+    acceleration: 40,
+    damping: 12,
+    gravity: 30,
+    jumpVelocity: 7
+  };
+
+  const movementKeys = new Set([
+    "ArrowUp",
+    "ArrowDown",
+    "ArrowLeft",
+    "ArrowRight",
+    "KeyW",
+    "KeyA",
+    "KeyS",
+    "KeyD",
+    "Space"
+  ]);
+
+  const handleKeyDown = (event) => {
+    if (firstPerson.awaitingLock || firstPerson.isActive) {
+      if (movementKeys.has(event.code)) {
+        event.preventDefault();
+      }
+    }
+    if (!firstPerson.isActive) {
+      return;
+    }
+    switch (event.code) {
+      case "ArrowUp":
+      case "KeyW":
+        firstPerson.moveForward = true;
+        break;
+      case "ArrowLeft":
+      case "KeyA":
+        firstPerson.moveLeft = true;
+        break;
+      case "ArrowDown":
+      case "KeyS":
+        firstPerson.moveBackward = true;
+        break;
+      case "ArrowRight":
+      case "KeyD":
+        firstPerson.moveRight = true;
+        break;
+      case "Space":
+        if (firstPerson.canJump) {
+          firstPerson.velocity.y = firstPerson.jumpVelocity;
+          firstPerson.canJump = false;
+        }
+        break;
+      case "Escape":
+        exitFirstPerson(state);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleKeyUp = (event) => {
+    if (!firstPerson.isActive) {
+      return;
+    }
+    switch (event.code) {
+      case "ArrowUp":
+      case "KeyW":
+        firstPerson.moveForward = false;
+        break;
+      case "ArrowLeft":
+      case "KeyA":
+        firstPerson.moveLeft = false;
+        break;
+      case "ArrowDown":
+      case "KeyS":
+        firstPerson.moveBackward = false;
+        break;
+      case "ArrowRight":
+      case "KeyD":
+        firstPerson.moveRight = false;
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleLock = () => {
+    const spawn = firstPerson.pendingSpawn ?? getRandomWalkablePosition(state.layout);
+    firstPerson.pendingSpawn = null;
+    firstPerson.awaitingLock = false;
+
+    if (!spawn) {
+      exitFirstPerson(state);
+      return;
+    }
+
+    firstPerson.isActive = true;
+    firstPerson.moveForward = false;
+    firstPerson.moveBackward = false;
+    firstPerson.moveLeft = false;
+    firstPerson.moveRight = false;
+    firstPerson.velocity.set(0, 0, 0);
+    firstPerson.canJump = true;
+    firstPerson.baseHeight = spawn.groundHeight;
+
+    const camera = firstPerson.controls.object;
+    camera.position.copy(spawn.position);
+
+    state.controls.enabled = false;
+    firstPerson.controls.enabled = true;
+
+    if (state.gui) {
+      state.gui.domElement.style.pointerEvents = "none";
+    }
+
+    if (document.activeElement && typeof document.activeElement.blur === "function") {
+      document.activeElement.blur();
+    }
+    queueMicrotask(() => {
+      if (state.renderer.domElement && typeof state.renderer.domElement.focus === "function") {
+        state.renderer.domElement.focus();
+      }
+    });
+  };
+
+  const handleUnlock = () => {
+    if (firstPerson.isActive || firstPerson.awaitingLock) {
+      exitFirstPerson(state);
+    }
+  };
+
+  controls.addEventListener("lock", handleLock);
+  controls.addEventListener("unlock", handleUnlock);
+  document.addEventListener("keydown", handleKeyDown);
+  document.addEventListener("keyup", handleKeyUp);
+
+  firstPerson.cleanup = () => {
+    document.removeEventListener("keydown", handleKeyDown);
+    document.removeEventListener("keyup", handleKeyUp);
+    controls.removeEventListener("lock", handleLock);
+    controls.removeEventListener("unlock", handleUnlock);
+  };
+
+  state.firstPerson = firstPerson;
+}
+
+function enterFirstPerson(state) {
+  if (!state.layout || !state.firstPerson) {
+    console.warn("First-person view requires a generated layout.");
+    return;
+  }
+  if (state.firstPerson.isActive || state.firstPerson.awaitingLock) {
+    return;
+  }
+
+  const spawn = getRandomWalkablePosition(state.layout);
+  if (!spawn) {
+    console.warn("Unable to find a suitable position for first-person view.");
+    return;
+  }
+
+  state.orbitSnapshot = {
+    position: state.camera.position.clone(),
+    target: state.controls.target.clone()
+  };
+
+  const firstPerson = state.firstPerson;
+  firstPerson.pendingSpawn = spawn;
+  firstPerson.awaitingLock = true;
+  firstPerson.velocity.set(0, 0, 0);
+  firstPerson.canJump = true;
+
+  if (document.activeElement && typeof document.activeElement.blur === "function") {
+    document.activeElement.blur();
+  }
+  if (state.gui) {
+    state.gui.domElement.style.pointerEvents = "none";
+  }
+
+  firstPerson.controls.lock();
+}
+
+function exitFirstPerson(state) {
+  const firstPerson = state.firstPerson;
+  if (!firstPerson) {
+    return;
+  }
+
+  const wasLocked = firstPerson.controls.isLocked;
+  const wasEngaged = firstPerson.isActive || firstPerson.awaitingLock;
+
+  firstPerson.isActive = false;
+  firstPerson.awaitingLock = false;
+  firstPerson.pendingSpawn = null;
+  firstPerson.moveForward = false;
+  firstPerson.moveBackward = false;
+  firstPerson.moveLeft = false;
+  firstPerson.moveRight = false;
+  firstPerson.velocity.set(0, 0, 0);
+  firstPerson.canJump = true;
+
+  if (wasLocked) {
+    firstPerson.controls.unlock();
+  }
+
+  state.controls.enabled = true;
+  if (state.gui) {
+    state.gui.domElement.style.pointerEvents = "";
+  }
+  if (document.activeElement === state.renderer.domElement) {
+    state.renderer.domElement.blur();
+  }
+
+  if (!wasEngaged) {
+    return;
+  }
+
+  if (state.orbitSnapshot) {
+    state.camera.position.copy(state.orbitSnapshot.position);
+    state.controls.target.copy(state.orbitSnapshot.target);
+  }
+  state.controls.update();
+}
+
+function updateFirstPerson(state, delta) {
+  const firstPerson = state.firstPerson;
+  if (!firstPerson || !firstPerson.isActive) {
+    return;
+  }
+
+  if (!firstPerson.controls.isLocked) {
+    exitFirstPerson(state);
+    return;
+  }
+
+  firstPerson.velocity.x -= firstPerson.velocity.x * firstPerson.damping * delta;
+  firstPerson.velocity.z -= firstPerson.velocity.z * firstPerson.damping * delta;
+
+  firstPerson.direction.z =
+    Number(firstPerson.moveForward) - Number(firstPerson.moveBackward);
+  firstPerson.direction.x =
+    Number(firstPerson.moveRight) - Number(firstPerson.moveLeft);
+  firstPerson.direction.normalize();
+
+  if (firstPerson.moveForward || firstPerson.moveBackward) {
+    firstPerson.velocity.z -= firstPerson.direction.z * firstPerson.acceleration * delta;
+  }
+  if (firstPerson.moveLeft || firstPerson.moveRight) {
+    firstPerson.velocity.x -= firstPerson.direction.x * firstPerson.acceleration * delta;
+  }
+
+  firstPerson.velocity.y -= firstPerson.gravity * delta;
+
+  firstPerson.controls.moveRight(-firstPerson.velocity.x * delta);
+  firstPerson.controls.moveForward(-firstPerson.velocity.z * delta);
+
+  const fpCamera = firstPerson.controls.object;
+  fpCamera.position.y += firstPerson.velocity.y * delta;
+
+  const floorY = firstPerson.baseHeight + firstPerson.cameraHeight;
+  if (fpCamera.position.y < floorY) {
+    firstPerson.velocity.y = 0;
+    fpCamera.position.y = floorY;
+    firstPerson.canJump = true;
+  }
+}
+
+function getRandomWalkablePosition(layout) {
+  if (!layout?.levels?.length) {
+    return null;
+  }
+
+  const [level] = layout.levels;
+  if (!level) {
+    return null;
+  }
+
+  const walkableCells = [];
+  for (let y = 0; y < level.height; y += 1) {
+    for (let x = 0; x < level.width; x += 1) {
+      const cell = level.grid[y][x];
+      if (cell && !cell.solid) {
+        walkableCells.push({ x, y });
+      }
+    }
+  }
+
+  if (walkableCells.length === 0) {
+    return null;
+  }
+
+  const randomCell = walkableCells[Math.floor(Math.random() * walkableCells.length)];
+  const cellSize = layout.cellSize ?? 1;
+  const halfWidth = (level.width * cellSize) / 2;
+  const halfHeight = (level.height * cellSize) / 2;
+
+  const worldX = randomCell.x * cellSize + cellSize / 2 - halfWidth;
+  const worldZ = randomCell.y * cellSize + cellSize / 2 - halfHeight;
+  const groundHeight = level.elevation;
+
+  return {
+    position: new THREE.Vector3(worldX, groundHeight + FIRST_PERSON_CAMERA_HEIGHT, worldZ),
+    groundHeight
+  };
 }
