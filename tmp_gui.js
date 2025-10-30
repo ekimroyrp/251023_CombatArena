@@ -41,32 +41,36 @@ export function createControlsPanel(params, callbacks) {
   ensureGuiFolderStyles();
   const gui = new GUI();
 
-  const layoutFolder = gui.addFolder("Plan");
-  layoutFolder
+  const plansFolder = gui.addFolder("Plans");
+  plansFolder
     .add(params, "type", TYPE_OPTIONS)
     .name("Layout Style")
     .onFinishChange(callbacks.onChange);
-  layoutFolder
+  plansFolder
     .add(params, "symmetry", SYMMETRY_OPTIONS)
     .name("Layout Symmetry")
     .onFinishChange(callbacks.onChange);
-  const seedController = layoutFolder
+  const seedController = plansFolder
     .add(params, "seed", 1, 1000, 1)
     .name("Layout Seed")
     .onFinishChange(callbacks.onChange);
-  layoutFolder
+  plansFolder
     .add(params, "cellSize", 1, 8, 0.5)
     .name("Grid Cell Size")
     .onFinishChange(callbacks.onChange);
-  layoutFolder
+  plansFolder
     .add(params, "gridWidth", 8, 64, 1)
     .name("Grid X Amount")
     .onFinishChange(callbacks.onChange);
-  layoutFolder
+  plansFolder
     .add(params, "gridHeight", 8, 64, 1)
     .name("Grid Y Amount")
     .onFinishChange(callbacks.onChange);
-  layoutFolder.open();
+  plansFolder
+    .add(params, "floorThickness", 0.25, 10, 0.25)
+    .name("Floor Thickness")
+    .onFinishChange(callbacks.onChange);
+  plansFolder.open();
 
   const roomsFolder = gui.addFolder("Rooms");
   roomsFolder
@@ -90,7 +94,7 @@ export function createControlsPanel(params, callbacks) {
   const corridorsFolder = gui.addFolder("Corridors");
   corridorsFolder
     .add(params, "corridorStyle", CORRIDOR_OPTIONS)
-    .name("Style")
+    .name("Corridor Type")
     .onFinishChange(callbacks.onChange);
   corridorsFolder
     .add(params, "corridorPaddingMin", 0, 10, 1)
@@ -109,33 +113,37 @@ export function createControlsPanel(params, callbacks) {
   const platformsFolder = gui.addFolder("Platforms");
   platformsFolder
     .add(params, "platforms", 0, 10, 1)
-    .name("Count")
+    .name("Platform Amount")
+    .onFinishChange(callbacks.onChange);
+  platformsFolder
+    .add(params, "platformThickness", 0.25, 10, 0.25)
+    .name("Platform Thickness")
     .onFinishChange(callbacks.onChange);
   platformsFolder
     .add(params, "platformSeed", 1, 1000, 1)
-    .name("Seed")
+    .name("Platform Seed")
     .onFinishChange(callbacks.onChange);
   platformsFolder.open();
 
-  const elevationFolder = gui.addFolder("Elevation");
-  elevationFolder
+  const levelsFolder = gui.addFolder("Levels");
+  levelsFolder
     .add(params, "wallHeight", 1, 12, 0.5)
     .name("Wall Height")
     .onFinishChange(callbacks.onChange);
-  elevationFolder
-    .add(params, "floorThickness", 0.25, 10, 0.25)
-    .name("Floor Thickness")
-    .onFinishChange(callbacks.onChange);
-  elevationFolder
-    .add(params, "Levels Amount", 1, 5, 1)
+  levelsFolder
+    .add(params, "floors", 1, 5, 1)
     .name("Levels Amount")
     .onFinishChange(callbacks.onChange);
-  elevationFolder.open();
+  levelsFolder.open();
 
   const propsFolder = gui.addFolder("Cover");
   propsFolder
     .add(params, "coverProbability", 0, 50, 1)
     .name("Cover Percentage")
+    .onFinishChange(callbacks.onChange);
+  propsFolder
+    .add(params, "coverSeed", 1, 1000, 1)
+    .name("Cover Seed")
     .onFinishChange(callbacks.onChange);
   propsFolder.open();
 
@@ -165,11 +173,11 @@ export function createControlsPanel(params, callbacks) {
     .onFinishChange(callbacks.onChange);
   displayFolder
     .addColor(params, "coverColor")
+    .name("Cover Color")
+    .onFinishChange(callbacks.onChange);
   displayFolder
     .addColor(params, "spawnColor")
     .name("Spawn Color")
-    .onFinishChange(callbacks.onChange);
-    .name("Cover Color")
     .onFinishChange(callbacks.onChange);
   displayFolder
     .addColor(params, "backgroundColor")
@@ -235,3 +243,4 @@ export function createControlsPanel(params, callbacks) {
     seedController
   };
 }
+

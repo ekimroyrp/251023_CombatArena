@@ -41,32 +41,36 @@ export function createControlsPanel(params, callbacks) {
   ensureGuiFolderStyles();
   const gui = new GUI();
 
-  const layoutFolder = gui.addFolder("Plan");
-  layoutFolder
+  const plansFolder = gui.addFolder("Plans");
+  plansFolder
     .add(params, "type", TYPE_OPTIONS)
     .name("Layout Style")
     .onFinishChange(callbacks.onChange);
-  layoutFolder
+  plansFolder
     .add(params, "symmetry", SYMMETRY_OPTIONS)
     .name("Layout Symmetry")
     .onFinishChange(callbacks.onChange);
-  const seedController = layoutFolder
+  const seedController = plansFolder
     .add(params, "seed", 1, 1000, 1)
     .name("Layout Seed")
     .onFinishChange(callbacks.onChange);
-  layoutFolder
+  plansFolder
     .add(params, "cellSize", 1, 8, 0.5)
     .name("Grid Cell Size")
     .onFinishChange(callbacks.onChange);
-  layoutFolder
+  plansFolder
     .add(params, "gridWidth", 8, 64, 1)
     .name("Grid X Amount")
     .onFinishChange(callbacks.onChange);
-  layoutFolder
+  plansFolder
     .add(params, "gridHeight", 8, 64, 1)
     .name("Grid Y Amount")
     .onFinishChange(callbacks.onChange);
-  layoutFolder.open();
+  plansFolder
+    .add(params, "floorThickness", 0.25, 10, 0.25)
+    .name("Floor Thickness")
+    .onFinishChange(callbacks.onChange);
+  plansFolder.open();
 
   const roomsFolder = gui.addFolder("Rooms");
   roomsFolder
@@ -121,20 +125,16 @@ export function createControlsPanel(params, callbacks) {
     .onFinishChange(callbacks.onChange);
   platformsFolder.open();
 
-  const elevationFolder = gui.addFolder("Elevation");
-  elevationFolder
+  const levelsFolder = gui.addFolder("Levels");
+  levelsFolder
     .add(params, "wallHeight", 1, 12, 0.5)
     .name("Wall Height")
     .onFinishChange(callbacks.onChange);
-  elevationFolder
-    .add(params, "floorThickness", 0.25, 10, 0.25)
-    .name("Floor Thickness")
-    .onFinishChange(callbacks.onChange);
-  elevationFolder
+  levelsFolder
     .add(params, "floors", 1, 5, 1)
     .name("Levels Amount")
     .onFinishChange(callbacks.onChange);
-  elevationFolder.open();
+  levelsFolder.open();
 
   const propsFolder = gui.addFolder("Cover");
   propsFolder
