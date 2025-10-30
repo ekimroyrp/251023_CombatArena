@@ -33,6 +33,7 @@ const DEFAULT_PARAMS = {
   platformThickness: 0.25,
   spawnAmount: 4,
   spawnSeed: 1,
+  spawnColor: "#59ff00",
   symmetry: "None",
   floorColor: "#404040",
   wallColor: "#ffffff",
@@ -120,11 +121,13 @@ export function initApp(container) {
 
 function rebuildArena(state) {
   const layout = generateArenaLayout(state.params);
+  state.layout = layout;
   const blockout = buildBlockoutGroup(layout, {
     floorColor: state.params.floorColor,
     wallColor: state.params.wallColor,
     platformColor: state.params.platformColor,
-    coverColor: state.params.coverColor
+    coverColor: state.params.coverColor,
+    spawnColor: state.params.spawnColor
   });
   updateGroundGrid(state.groundGrid, layout.cellSize, state.params.gridColor);
   state.scene.background.set(state.params.backgroundColor);

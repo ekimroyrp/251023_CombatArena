@@ -24,7 +24,9 @@ export function buildBlockoutGroup(layout, colors = {}) {
   const platformColor = new THREE.Color(
     colors.platformColor ?? DEFAULT_PLATFORM_COLOR
   );
-  const spawnColor = new THREE.Color(DEFAULT_SPAWN_COLOR);
+  const spawnColor = new THREE.Color(
+    colors.spawnColor ?? DEFAULT_SPAWN_COLOR
+  );
 
   const effectivePlatformThickness = Math.max(
     0.001,

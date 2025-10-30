@@ -176,6 +176,10 @@ export function createControlsPanel(params, callbacks) {
     .name("Cover Color")
     .onFinishChange(callbacks.onChange);
   displayFolder
+    .addColor(params, "spawnColor")
+    .name("Spawn Color")
+    .onFinishChange(callbacks.onChange);
+  displayFolder
     .addColor(params, "backgroundColor")
     .name("Background Color")
     .onFinishChange(callbacks.onChange);
