@@ -20,7 +20,7 @@ pm run build
 5. Preview the build locally: 
 pm run preview
 
-## Controls & Workflow
+## Controls
 - **Seed & Reset:** Roll new layouts, enter exact seeds to reproduce results, or reset the generator state.
 - **Arena Layout:** Adjust grid width/height, room density, room size caps, floor count, platform density, and symmetry options.
 - **Routing & Props:** Choose corridor routing algorithms, tune cover percentage, and tweak spawn spacing/quantity.
