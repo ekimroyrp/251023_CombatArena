@@ -1,4 +1,4 @@
-# FPS Blockout Arena Generator
+# 251023_CombatArena
 
 Procedural FPS arena blockout generator built with Three.js. The tool carves a grid-based network of rooms and corridors, then merges the resulting blockout meshes for fast iteration on level layouts.
 
