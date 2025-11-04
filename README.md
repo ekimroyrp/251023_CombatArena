@@ -27,3 +27,11 @@ pm run preview
 - **Presets:** Load Halo / CS2 / Quake presets to start from curated parameter sets before customizing.
 - **Viewing Modes:** Use orbit controls for overview or enter First Person View for WASD exploration (ESC exits).
 - **Export:** Click Export in the Actions panel to download the merged OBJ blockout for further iteration.
+
+## Deployment
+- **Local production preview:** Run 
+pm run build followed by 
+pm run preview to serve the optimized bundle locally.
+- **Publish to GitHub Pages:** Run 
+pm run build (with ase: "./" already configured), copy the dist/ contents into the gh-pages branch, commit, and git push origin gh-pages.
+- **Live demo:** https://ekimroyrp.github.io/251023_CombatArena/
