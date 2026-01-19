@@ -135,6 +135,10 @@ export function createControlsPanel(params, callbacks) {
     .name("Elevation Max")
     .onFinishChange(callbacks.onChange);
   elevationsFolder
+    .add(params, "elevationChance", 0, 100, 1)
+    .name("Elevation Chance")
+    .onFinishChange(callbacks.onChange);
+  elevationsFolder
     .add(params, "elevationSeed", 1, 1000, 1)
     .name("Elevation Seed")
     .onFinishChange(callbacks.onChange);

@@ -25,6 +25,7 @@ const DEFAULT_PARAMS = {
   roomHighlight: false,
   elevationMin: 0,
   elevationMax: 0,
+  elevationChance: 100,
   elevationSeed: 1,
   corridorStyle: "L",
   corridorPaddingMin: 1,

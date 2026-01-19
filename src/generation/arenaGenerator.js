@@ -242,6 +242,11 @@ function normalizeOptions(options) {
     elevationStep
   );
   const elevationSeed = clamp(Math.floor(options.elevationSeed ?? 1), 1, 1000);
+  const elevationChance = clamp(
+    Number.isFinite(options.elevationChance) ? options.elevationChance : 100,
+    0,
+    100
+  );
 
   return {
     seed: String(rawSeed),
@@ -278,6 +283,7 @@ function normalizeOptions(options) {
     coverProbability,
     elevationMin,
     elevationMax,
+    elevationChance,
     elevationSeed: String(elevationSeed),
     elevationStep,
     wallHeight,
@@ -396,6 +402,11 @@ function assignRoomElevations(grid, rooms, config, levelIndex) {
     Number.isFinite(config.elevationMin) ? config.elevationMin : 0;
   const elevationMax =
     Number.isFinite(config.elevationMax) ? config.elevationMax : 0;
+  const elevationChance = clamp(
+    Number.isFinite(config.elevationChance) ? config.elevationChance : 100,
+    0,
+    100
+  );
   const elevationStep =
     Number.isFinite(config.elevationStep) ? config.elevationStep : 1;
   const seed = config.elevationSeed ?? "1";
@@ -404,12 +415,10 @@ function assignRoomElevations(grid, rooms, config, levelIndex) {
   );
 
   for (const room of rooms) {
-    const elevation = pickElevationStep(
-      elevationRng,
-      elevationMin,
-      elevationMax,
-      elevationStep
-    );
+    const canVary = elevationChance > 0 && elevationRng() * 100 < elevationChance;
+    const elevation = canVary
+      ? pickElevationStep(elevationRng, elevationMin, elevationMax, elevationStep)
+      : 0;
     room.elevation = elevation;
 
     for (let dy = 0; dy < room.height; dy += 1) {
