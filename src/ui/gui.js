@@ -165,6 +165,10 @@ export function createControlsPanel(params, callbacks) {
     .add(params, "platformSeed", 1, 1000, 1)
     .name("Platform Seed")
     .onFinishChange(callbacks.onChange);
+  platformsFolder
+    .add(params, "platformHide")
+    .name("Platform Hide")
+    .onFinishChange(callbacks.onChange);
   platformsFolder.open();
 
   const levelsFolder = gui.addFolder("Levels");

@@ -42,6 +42,7 @@ export function buildBlockoutGroup(layout, colors = {}) {
   );
   const roomHighlightEnabled = Boolean(colors.roomHighlight);
   const wallHidden = Boolean(colors.wallHide);
+  const platformHidden = Boolean(colors.platformHide);
 
   const effectivePlatformThickness = Math.max(
     0.001,
@@ -203,12 +204,14 @@ export function buildBlockoutGroup(layout, colors = {}) {
     new THREE.MeshStandardMaterial({ color: spawnColor, roughness: 0.4 }),
     { castShadow: true, receiveShadow: true }
   );
-  addMergedMesh(
-    group,
-    platformGeometries,
-    new THREE.MeshStandardMaterial({ color: platformColor, roughness: 0.5 }),
-    { castShadow: true, receiveShadow: true }
-  );
+  if (!platformHidden) {
+    addMergedMesh(
+      group,
+      platformGeometries,
+      new THREE.MeshStandardMaterial({ color: platformColor, roughness: 0.5 }),
+      { castShadow: true, receiveShadow: true }
+    );
+  }
 
   return group;
 }

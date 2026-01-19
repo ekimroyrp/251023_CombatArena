@@ -39,6 +39,7 @@ const DEFAULT_PARAMS = {
   platforms: 0,
   platformHeight: 3,
   platformSeed: 1,
+  platformHide: false,
   platformThickness: 0.25,
   spawnAmount: 0,
   spawnSeed: 1,
@@ -167,6 +168,7 @@ function rebuildArena(state) {
     wallColor: state.params.wallColor,
     wallHide: state.params.wallHide,
     platformColor: state.params.platformColor,
+    platformHide: state.params.platformHide,
     coverColor: state.params.coverColor,
     spawnColor: state.params.spawnColor,
     roomHighlight: state.params.roomHighlight
@@ -611,16 +613,33 @@ function getGroundHeightAtPosition(layout, worldX, worldZ, worldY) {
     return null;
   }
 
+  const levelBase = Number.isFinite(level.elevation) ? level.elevation : 0;
   const baseHeight = Number.isFinite(cell.elevation) ? cell.elevation : 0;
-  if (!cell.rampDir || !Number.isFinite(cell.rampRise) || cell.rampRise === 0) {
-    return level.elevation + baseHeight;
+  let floorLocalHeight = baseHeight;
+
+  if (cell.rampDir && Number.isFinite(cell.rampRise) && cell.rampRise !== 0) {
+    const localX = (worldX + halfWidth) / cellSize - gridX;
+    const localZ = (worldZ + halfHeight) / cellSize - gridY;
+    floorLocalHeight = getRampHeight(
+      baseHeight,
+      cell.rampDir,
+      cell.rampRise,
+      localX,
+      localZ
+    );
   }
 
-  const localX = (worldX + halfWidth) / cellSize - gridX;
-  const localZ = (worldZ + halfHeight) / cellSize - gridY;
-  const rampHeight = getRampHeight(baseHeight, cell.rampDir, cell.rampRise, localX, localZ);
+  let groundWorldHeight = levelBase + floorLocalHeight;
+  const platformTopLocal = getPlatformTopHeight(layout, cell, baseHeight);
+  if (platformTopLocal !== null) {
+    const platformTopWorld = levelBase + platformTopLocal;
+    const footY = worldY - FIRST_PERSON_CAMERA_HEIGHT;
+    if (footY + 0.05 >= platformTopWorld && platformTopWorld > groundWorldHeight) {
+      groundWorldHeight = platformTopWorld;
+    }
+  }
 
-  return level.elevation + rampHeight;
+  return groundWorldHeight;
 }
 
 function findClosestLevel(layout, worldY) {
@@ -637,6 +656,17 @@ function findClosestLevel(layout, worldY) {
     }
   }
   return closest;
+}
+
+function getPlatformTopHeight(layout, cell, baseHeight) {
+  if (!cell || cell.platformId === null) {
+    return null;
+  }
+  const platformHeight = layout.platformHeight;
+  if (!Number.isFinite(platformHeight)) {
+    return null;
+  }
+  return baseHeight + platformHeight;
 }
 
 function getRampHeight(baseHeight, rampDir, rampRise, localX, localZ) {
