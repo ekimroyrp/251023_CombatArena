@@ -127,11 +127,11 @@ export function createControlsPanel(params, callbacks) {
 
   const elevationsFolder = gui.addFolder("Elevations");
   elevationsFolder
-    .add(params, "elevationMin", -3, 3, 1)
+    .add(params, "elevationMin", -10, 10, 0.25)
     .name("Elevation Min")
     .onFinishChange(callbacks.onChange);
   elevationsFolder
-    .add(params, "elevationMax", -3, 3, 1)
+    .add(params, "elevationMax", -10, 10, 0.25)
     .name("Elevation Max")
     .onFinishChange(callbacks.onChange);
   elevationsFolder

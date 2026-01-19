@@ -221,21 +221,27 @@ function normalizeOptions(options) {
     1,
     16
   );
-  const elevationLimit = 3;
+  const elevationLimit = 10;
+  const elevationStep = 0.25;
   const elevationMinRaw = clamp(
-    Math.floor(options.elevationMin ?? 0),
+    Number(options.elevationMin ?? 0),
     -elevationLimit,
     elevationLimit
   );
   const elevationMaxRaw = clamp(
-    Math.floor(options.elevationMax ?? 0),
+    Number(options.elevationMax ?? 0),
     -elevationLimit,
     elevationLimit
   );
-  const elevationMin = Math.min(elevationMinRaw, elevationMaxRaw);
-  const elevationMax = Math.max(elevationMinRaw, elevationMaxRaw);
+  const elevationMin = quantize(
+    Math.min(elevationMinRaw, elevationMaxRaw),
+    elevationStep
+  );
+  const elevationMax = quantize(
+    Math.max(elevationMinRaw, elevationMaxRaw),
+    elevationStep
+  );
   const elevationSeed = clamp(Math.floor(options.elevationSeed ?? 1), 1, 1000);
-  const elevationStep = 1;
 
   return {
     seed: String(rawSeed),
@@ -398,8 +404,12 @@ function assignRoomElevations(grid, rooms, config, levelIndex) {
   );
 
   for (const room of rooms) {
-    const step = randomInt(elevationRng, elevationMin, elevationMax);
-    const elevation = step * elevationStep;
+    const elevation = pickElevationStep(
+      elevationRng,
+      elevationMin,
+      elevationMax,
+      elevationStep
+    );
     room.elevation = elevation;
 
     for (let dy = 0; dy < room.height; dy += 1) {
@@ -735,6 +745,25 @@ function fillMissingElevations(grid) {
       }
     }
   }
+}
+
+function pickElevationStep(rng, min, max, step) {
+  if (!Number.isFinite(min) || !Number.isFinite(max) || !Number.isFinite(step)) {
+    return 0;
+  }
+  if (max <= min || step <= 0) {
+    return min;
+  }
+  const stepCount = Math.round((max - min) / step);
+  const value = min + randomInt(rng, 0, stepCount) * step;
+  return quantize(value, step);
+}
+
+function quantize(value, step) {
+  if (!Number.isFinite(value) || !Number.isFinite(step) || step <= 0) {
+    return value;
+  }
+  return Math.round(value / step) * step;
 }
 
 function sprinkleCover(grid, config, rng) {
