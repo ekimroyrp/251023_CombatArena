@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
-const DEFAULT_FLOOR_COLOR = 0x404040;
+const DEFAULT_FLOOR_COLOR = 0x909090;
 const DEFAULT_WALL_COLOR = 0xffffff;
 const DEFAULT_COVER_COLOR = 0xff7b00;
 const DEFAULT_PLATFORM_COLOR = 0x89d7e1;
@@ -40,6 +40,7 @@ export function buildBlockoutGroup(layout, colors = {}) {
     colors.roomHighlightColor ?? DEFAULT_ROOM_HIGHLIGHT_COLOR
   );
   const roomHighlightEnabled = Boolean(colors.roomHighlight);
+  const wallHidden = Boolean(colors.wallHide);
 
   const effectivePlatformThickness = Math.max(
     0.001,
@@ -178,12 +179,14 @@ export function buildBlockoutGroup(layout, colors = {}) {
       opacity: 0.6
     })
   );
-  addMergedMesh(
-    group,
-    wallGeometries,
-    new THREE.MeshStandardMaterial({ color: wallColor, roughness: 0.55 }),
-    { castShadow: true, receiveShadow: true }
-  );
+  if (!wallHidden) {
+    addMergedMesh(
+      group,
+      wallGeometries,
+      new THREE.MeshStandardMaterial({ color: wallColor, roughness: 0.55 }),
+      { castShadow: true, receiveShadow: true }
+    );
+  }
   addMergedMesh(
     group,
     coverGeometries,

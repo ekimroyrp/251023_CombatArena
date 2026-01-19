@@ -81,9 +81,17 @@ export function createControlsPanel(params, callbacks) {
     .add(params, "wallThickness", 0.25, 10, 0.25)
     .name("Wall Thickness")
     .onFinishChange(callbacks.onChange);
+  wallsFolder
+    .add(params, "wallHide")
+    .name("Wall Hide")
+    .onFinishChange(callbacks.onChange);
   wallsFolder.open();
 
   const roomsFolder = gui.addFolder("Rooms");
+  roomsFolder
+    .add(params, "rooms", 1, 100, 1)
+    .name("Room Amount")
+    .onFinishChange(callbacks.onChange);
   roomsFolder
     .add(params, "roomSizeMin", 3, 24, 1)
     .name("Room Min")
@@ -95,10 +103,6 @@ export function createControlsPanel(params, callbacks) {
   roomsFolder
     .add(params, "roomSizeSeed", 1, 1000, 1)
     .name("Room Seed")
-    .onFinishChange(callbacks.onChange);
-  roomsFolder
-    .add(params, "rooms", 1, 100, 1)
-    .name("Room Amount")
     .onFinishChange(callbacks.onChange);
   roomsFolder
     .add(params, "roomHighlight")
