@@ -553,39 +553,51 @@ function getRandomWalkablePosition(layout) {
     return null;
   }
 
-  const [level] = layout.levels;
-  if (!level) {
-    return null;
-  }
+  const candidates = [];
+  let minHeight = null;
 
-  const walkableCells = [];
-  for (let y = 0; y < level.height; y += 1) {
-    for (let x = 0; x < level.width; x += 1) {
-      const cell = level.grid[y][x];
-      if (cell && !cell.solid) {
-        walkableCells.push({ x, y });
+  for (const level of layout.levels) {
+    if (!level) {
+      continue;
+    }
+    const levelBase = Number.isFinite(level.elevation) ? level.elevation : 0;
+    for (let y = 0; y < level.height; y += 1) {
+      for (let x = 0; x < level.width; x += 1) {
+        const cell = level.grid[y][x];
+        if (!cell || cell.solid) {
+          continue;
+        }
+        const cellElevation = Number.isFinite(cell.elevation) ? cell.elevation : 0;
+        const height = levelBase + cellElevation;
+        if (minHeight === null || height < minHeight - 0.0001) {
+          minHeight = height;
+          candidates.length = 0;
+          candidates.push({ level, x, y, groundHeight: height });
+        } else if (Math.abs(height - minHeight) < 0.0001) {
+          candidates.push({ level, x, y, groundHeight: height });
+        }
       }
     }
   }
 
-  if (walkableCells.length === 0) {
+  if (candidates.length === 0) {
     return null;
   }
 
-  const randomCell = walkableCells[Math.floor(Math.random() * walkableCells.length)];
+  const chosen = candidates[Math.floor(Math.random() * candidates.length)];
   const cellSize = layout.cellSize ?? 1;
-  const halfWidth = (level.width * cellSize) / 2;
-  const halfHeight = (level.height * cellSize) / 2;
-  const cell = level.grid[randomCell.y][randomCell.x];
-  const cellElevation = Number.isFinite(cell?.elevation) ? cell.elevation : 0;
-
-  const worldX = randomCell.x * cellSize + cellSize / 2 - halfWidth;
-  const worldZ = randomCell.y * cellSize + cellSize / 2 - halfHeight;
-  const groundHeight = level.elevation + cellElevation;
+  const halfWidth = (chosen.level.width * cellSize) / 2;
+  const halfHeight = (chosen.level.height * cellSize) / 2;
+  const worldX = chosen.x * cellSize + cellSize / 2 - halfWidth;
+  const worldZ = chosen.y * cellSize + cellSize / 2 - halfHeight;
 
   return {
-    position: new THREE.Vector3(worldX, groundHeight + FIRST_PERSON_CAMERA_HEIGHT, worldZ),
-    groundHeight
+    position: new THREE.Vector3(
+      worldX,
+      chosen.groundHeight + FIRST_PERSON_CAMERA_HEIGHT,
+      worldZ
+    ),
+    groundHeight: chosen.groundHeight
   };
 }
 
