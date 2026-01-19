@@ -125,6 +125,21 @@ export function createControlsPanel(params, callbacks) {
     .onFinishChange(callbacks.onChange);
   corridorsFolder.open();
 
+  const elevationsFolder = gui.addFolder("Elevations");
+  elevationsFolder
+    .add(params, "elevationMin", -3, 3, 1)
+    .name("Elevation Min")
+    .onFinishChange(callbacks.onChange);
+  elevationsFolder
+    .add(params, "elevationMax", -3, 3, 1)
+    .name("Elevation Max")
+    .onFinishChange(callbacks.onChange);
+  elevationsFolder
+    .add(params, "elevationSeed", 1, 1000, 1)
+    .name("Elevation Seed")
+    .onFinishChange(callbacks.onChange);
+  elevationsFolder.open();
+
   const platformsFolder = gui.addFolder("Platforms");
   platformsFolder
     .add(params, "platforms", 0, 10, 1)

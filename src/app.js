@@ -23,6 +23,9 @@ const DEFAULT_PARAMS = {
   roomSizeSeed: 1,
   maxRoomSize: 8,
   roomHighlight: false,
+  elevationMin: 0,
+  elevationMax: 0,
+  elevationSeed: 1,
   corridorStyle: "L",
   corridorPaddingMin: 1,
   corridorPaddingMax: 1,
@@ -521,6 +524,16 @@ function updateFirstPerson(state, delta) {
   const fpCamera = firstPerson.controls.object;
   fpCamera.position.y += firstPerson.velocity.y * delta;
 
+  const groundHeight = getGroundHeightAtPosition(
+    state.layout,
+    fpCamera.position.x,
+    fpCamera.position.z,
+    fpCamera.position.y
+  );
+  if (groundHeight !== null) {
+    firstPerson.baseHeight = groundHeight;
+  }
+
   const floorY = firstPerson.baseHeight + firstPerson.cameraHeight;
   if (fpCamera.position.y < floorY) {
     firstPerson.velocity.y = 0;
@@ -557,13 +570,84 @@ function getRandomWalkablePosition(layout) {
   const cellSize = layout.cellSize ?? 1;
   const halfWidth = (level.width * cellSize) / 2;
   const halfHeight = (level.height * cellSize) / 2;
+  const cell = level.grid[randomCell.y][randomCell.x];
+  const cellElevation = Number.isFinite(cell?.elevation) ? cell.elevation : 0;
 
   const worldX = randomCell.x * cellSize + cellSize / 2 - halfWidth;
   const worldZ = randomCell.y * cellSize + cellSize / 2 - halfHeight;
-  const groundHeight = level.elevation;
+  const groundHeight = level.elevation + cellElevation;
 
   return {
     position: new THREE.Vector3(worldX, groundHeight + FIRST_PERSON_CAMERA_HEIGHT, worldZ),
     groundHeight
   };
+}
+
+function getGroundHeightAtPosition(layout, worldX, worldZ, worldY) {
+  if (!layout?.levels?.length) {
+    return null;
+  }
+  const level = findClosestLevel(layout, worldY);
+  if (!level) {
+    return null;
+  }
+
+  const cellSize = layout.cellSize ?? 1;
+  const halfWidth = (level.width * cellSize) / 2;
+  const halfHeight = (level.height * cellSize) / 2;
+  const gridX = Math.floor((worldX + halfWidth) / cellSize);
+  const gridY = Math.floor((worldZ + halfHeight) / cellSize);
+
+  if (gridY < 0 || gridY >= level.height || gridX < 0 || gridX >= level.width) {
+    return null;
+  }
+
+  const cell = level.grid[gridY][gridX];
+  if (!cell || cell.solid) {
+    return null;
+  }
+
+  const baseHeight = Number.isFinite(cell.elevation) ? cell.elevation : 0;
+  if (!cell.rampDir || !Number.isFinite(cell.rampRise) || cell.rampRise === 0) {
+    return level.elevation + baseHeight;
+  }
+
+  const localX = (worldX + halfWidth) / cellSize - gridX;
+  const localZ = (worldZ + halfHeight) / cellSize - gridY;
+  const rampHeight = getRampHeight(baseHeight, cell.rampDir, cell.rampRise, localX, localZ);
+
+  return level.elevation + rampHeight;
+}
+
+function findClosestLevel(layout, worldY) {
+  if (!layout?.levels?.length) {
+    return null;
+  }
+  let closest = layout.levels[0];
+  let minDist = Math.abs((closest.elevation ?? 0) - worldY);
+  for (const level of layout.levels) {
+    const dist = Math.abs((level.elevation ?? 0) - worldY);
+    if (dist < minDist) {
+      minDist = dist;
+      closest = level;
+    }
+  }
+  return closest;
+}
+
+function getRampHeight(baseHeight, rampDir, rampRise, localX, localZ) {
+  const clampedX = Math.min(Math.max(localX, 0), 1);
+  const clampedZ = Math.min(Math.max(localZ, 0), 1);
+  switch (rampDir) {
+    case "x+":
+      return baseHeight + rampRise * clampedX;
+    case "x-":
+      return baseHeight + rampRise * (1 - clampedX);
+    case "z+":
+      return baseHeight + rampRise * clampedZ;
+    case "z-":
+      return baseHeight + rampRise * (1 - clampedZ);
+    default:
+      return baseHeight;
+  }
 }

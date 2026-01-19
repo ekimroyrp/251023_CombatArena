@@ -58,10 +58,13 @@ export function generateArenaLayout(options) {
 
     if (rooms.length === 0) {
       const fallback = createFallbackRoom(config);
-      paintRoom(grid, fallback);
-      rooms.push(fallback);
+      const roomId = 0;
+      const taggedFallback = { ...fallback, id: roomId };
+      paintRoom(grid, taggedFallback, roomId);
+      rooms.push(addRoomCenter(taggedFallback));
     }
 
+    assignRoomElevations(grid, rooms, config, levelIndex);
     connectRooms(grid, rooms, config, levelRng);
     sprinkleCover(grid, config, createRng(`${config.seed}-cover-${levelIndex}-${config.coverSeed}`));
     const platformRng = createRng(
@@ -91,6 +94,8 @@ export function generateArenaLayout(options) {
     spawnForLevel = Math.max(0, spawnForLevel);
     const spawnPlaced = placeSpawnPoints(grid, spawnForLevel, spawnRng);
     remainingSpawns = Math.max(0, remainingSpawns - spawnPlaced);
+
+    fillMissingElevations(grid);
 
     levels.push({
       index: levelIndex,
@@ -216,6 +221,21 @@ function normalizeOptions(options) {
     1,
     16
   );
+  const elevationLimit = 3;
+  const elevationMinRaw = clamp(
+    Math.floor(options.elevationMin ?? 0),
+    -elevationLimit,
+    elevationLimit
+  );
+  const elevationMaxRaw = clamp(
+    Math.floor(options.elevationMax ?? 0),
+    -elevationLimit,
+    elevationLimit
+  );
+  const elevationMin = Math.min(elevationMinRaw, elevationMaxRaw);
+  const elevationMax = Math.max(elevationMinRaw, elevationMaxRaw);
+  const elevationSeed = clamp(Math.floor(options.elevationSeed ?? 1), 1, 1000);
+  const elevationStep = 1;
 
   return {
     seed: String(rawSeed),
@@ -250,6 +270,10 @@ function normalizeOptions(options) {
     rectangularity: Math.max(1, styleProfile.rectangularity ?? 1),
     atriumChance: clamp01(styleProfile.atriumChance ?? 0),
     coverProbability,
+    elevationMin,
+    elevationMax,
+    elevationSeed: String(elevationSeed),
+    elevationStep,
     wallHeight,
     loopFactor: Math.max(0, styleProfile.loopFactor ?? 1)
   };
@@ -262,8 +286,12 @@ function createGrid(width, height) {
       cover: false,
       rampUp: false,
       rampDown: false,
+      rampDir: null,
+      rampRise: 0,
       platformId: null,
-      spawn: false
+      spawn: false,
+      roomId: null,
+      elevation: null
     }))
   );
 }
@@ -330,13 +358,15 @@ function carveRooms(grid, config, rng, sizeRng) {
       continue;
     }
 
+    const roomId = rooms.length;
     const room = {
+      id: roomId,
       x,
       y,
       width: roomWidth,
       height: roomHeight
     };
-    paintRoom(grid, room);
+    paintRoom(grid, room, roomId);
     rooms.push(addRoomCenter(room));
   }
 
@@ -355,6 +385,36 @@ function createFallbackRoom(config) {
   });
 }
 
+function assignRoomElevations(grid, rooms, config, levelIndex) {
+  const elevationMin =
+    Number.isFinite(config.elevationMin) ? config.elevationMin : 0;
+  const elevationMax =
+    Number.isFinite(config.elevationMax) ? config.elevationMax : 0;
+  const elevationStep =
+    Number.isFinite(config.elevationStep) ? config.elevationStep : 1;
+  const seed = config.elevationSeed ?? "1";
+  const elevationRng = createRng(
+    `${config.seed}-elevation-${seed}-L${levelIndex}`
+  );
+
+  for (const room of rooms) {
+    const step = randomInt(elevationRng, elevationMin, elevationMax);
+    const elevation = step * elevationStep;
+    room.elevation = elevation;
+
+    for (let dy = 0; dy < room.height; dy += 1) {
+      for (let dx = 0; dx < room.width; dx += 1) {
+        const cell = grid[room.y + dy][room.x + dx];
+        cell.elevation = elevation;
+        cell.rampUp = false;
+        cell.rampDown = false;
+        cell.rampDir = null;
+        cell.rampRise = 0;
+      }
+    }
+  }
+}
+
 function addRoomCenter(room) {
   return {
     ...room,
@@ -365,10 +425,12 @@ function addRoomCenter(room) {
   };
 }
 
-function paintRoom(grid, room) {
+function paintRoom(grid, room, roomId) {
   for (let dy = 0; dy < room.height; dy += 1) {
     for (let dx = 0; dx < room.width; dx += 1) {
-      grid[room.y + dy][room.x + dx].solid = false;
+      const cell = grid[room.y + dy][room.x + dx];
+      cell.solid = false;
+      cell.roomId = roomId ?? room.id ?? null;
     }
   }
 }
@@ -419,14 +481,7 @@ function connectRooms(grid, rooms, config, rng) {
       break;
     }
 
-    carveCorridor(
-      grid,
-      bestPair.source.center,
-      bestPair.target.center,
-      config,
-      corridorIndex,
-      rng
-    );
+    carveCorridor(grid, bestPair.source, bestPair.target, config, corridorIndex, rng);
     corridorIndex += 1;
 
     connected.push(bestPair.target);
@@ -444,12 +499,12 @@ function connectRooms(grid, rooms, config, rng) {
     if (a === b) {
       continue;
     }
-    carveCorridor(grid, a.center, b.center, config, corridorIndex, rng);
+    carveCorridor(grid, a, b, config, corridorIndex, rng);
     corridorIndex += 1;
   }
 }
 
-function carveCorridor(grid, from, to, config, corridorIndex, rng) {
+function carveCorridor(grid, fromRoom, toRoom, config, corridorIndex, rng) {
   let corridorStyle = config.corridorStyle;
   if (
     config.styleCorridor &&
@@ -460,18 +515,54 @@ function carveCorridor(grid, from, to, config, corridorIndex, rng) {
     corridorStyle = config.styleCorridor;
   }
 
-  const path = getCorridorPath(corridorStyle, from, to, rng);
-  const padding = pickCorridorPadding(config, from, to, corridorIndex);
+  const path = getCorridorPath(
+    corridorStyle,
+    fromRoom.center,
+    toRoom.center,
+    rng
+  );
+  const padding = pickCorridorPadding(
+    config,
+    fromRoom.center,
+    toRoom.center,
+    corridorIndex
+  );
+  const pathHeights = resolveCorridorHeights(
+    grid,
+    path,
+    Number.isFinite(fromRoom.elevation) ? fromRoom.elevation : 0,
+    Number.isFinite(toRoom.elevation) ? toRoom.elevation : 0
+  );
 
-  for (const point of path) {
+  for (let index = 0; index < path.length; index += 1) {
+    const point = path[index];
     if (!insideBounds(grid, point.x, point.y)) {
       continue;
     }
-    grid[point.y][point.x].solid = false;
+    const cell = grid[point.y][point.x];
+    cell.solid = false;
+    const height = pathHeights[index];
+    if (height !== null && cell.roomId === null && cell.elevation === null) {
+      cell.elevation = height;
+    }
 
     // Soften hard diagonals by carving a plus-shaped footprint.
-    carvePadding(grid, point.x, point.y, padding, config.carveDiagonals);
+    const baseHeight = Number.isFinite(height)
+      ? height
+      : Number.isFinite(cell.elevation)
+      ? cell.elevation
+      : 0;
+    carvePadding(
+      grid,
+      point.x,
+      point.y,
+      padding,
+      config.carveDiagonals,
+      baseHeight
+    );
   }
+
+  applyCorridorRamps(grid, path, pathHeights);
 }
 
 function pickCorridorPadding(config, from, to, corridorIndex) {
@@ -487,7 +578,7 @@ function pickCorridorPadding(config, from, to, corridorIndex) {
   return randomInt(paddingRng, min, max);
 }
 
-function carvePadding(grid, x, y, radius, includeDiagonals) {
+function carvePadding(grid, x, y, radius, includeDiagonals, baseHeight) {
   for (let step = 1; step <= radius; step += 1) {
     const offsets = [
       [step, 0],
@@ -509,7 +600,138 @@ function carvePadding(grid, x, y, radius, includeDiagonals) {
       const nx = x + dx;
       const ny = y + dy;
       if (insideBounds(grid, nx, ny)) {
-        grid[ny][nx].solid = false;
+        const cell = grid[ny][nx];
+        cell.solid = false;
+        if (cell.roomId === null && cell.elevation === null && Number.isFinite(baseHeight)) {
+          cell.elevation = baseHeight;
+        }
+      }
+    }
+  }
+}
+
+function resolveCorridorHeights(grid, path, startHeight, endHeight) {
+  const heights = Array(path.length).fill(null);
+  let firstCorridor = -1;
+  let lastCorridor = -1;
+
+  for (let i = 0; i < path.length; i += 1) {
+    const point = path[i];
+    if (!insideBounds(grid, point.x, point.y)) {
+      continue;
+    }
+    const cell = grid[point.y][point.x];
+    if (cell.roomId === null) {
+      if (firstCorridor === -1) {
+        firstCorridor = i;
+      }
+      lastCorridor = i;
+    }
+  }
+
+  if (firstCorridor === -1) {
+    return heights;
+  }
+
+  const span = lastCorridor - firstCorridor;
+  for (let i = firstCorridor; i <= lastCorridor; i += 1) {
+    const t = span === 0 ? 0 : (i - firstCorridor) / span;
+    heights[i] = startHeight + (endHeight - startHeight) * t;
+  }
+
+  return heights;
+}
+
+function applyCorridorRamps(grid, path, pathHeights) {
+  for (let i = 0; i < path.length - 1; i += 1) {
+    const current = path[i];
+    const next = path[i + 1];
+    if (!insideBounds(grid, current.x, current.y) || !insideBounds(grid, next.x, next.y)) {
+      continue;
+    }
+    const cellA = grid[current.y][current.x];
+    const cellB = grid[next.y][next.x];
+
+    if (cellA.roomId !== null || cellB.roomId !== null) {
+      continue;
+    }
+
+    const heightA = getCellElevation(cellA, pathHeights[i]);
+    const heightB = getCellElevation(cellB, pathHeights[i + 1]);
+    if (!Number.isFinite(heightA) || !Number.isFinite(heightB) || heightA === heightB) {
+      continue;
+    }
+
+    const dir = getRampDirection(current, next);
+    if (!dir) {
+      continue;
+    }
+
+    if (heightA < heightB) {
+      setRamp(cellA, dir, heightB - heightA);
+    } else {
+      setRamp(cellB, invertRampDirection(dir), heightA - heightB);
+    }
+  }
+}
+
+function getCellElevation(cell, fallback) {
+  if (Number.isFinite(cell.elevation)) {
+    return cell.elevation;
+  }
+  if (Number.isFinite(fallback)) {
+    return fallback;
+  }
+  return 0;
+}
+
+function getRampDirection(from, to) {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  if (dx === 1 && dy === 0) return "x+";
+  if (dx === -1 && dy === 0) return "x-";
+  if (dx === 0 && dy === 1) return "z+";
+  if (dx === 0 && dy === -1) return "z-";
+  return null;
+}
+
+function invertRampDirection(dir) {
+  switch (dir) {
+    case "x+":
+      return "x-";
+    case "x-":
+      return "x+";
+    case "z+":
+      return "z-";
+    case "z-":
+      return "z+";
+    default:
+      return dir;
+  }
+}
+
+function setRamp(cell, direction, rise) {
+  if (!direction || !Number.isFinite(rise) || rise === 0) {
+    return;
+  }
+  if (cell.rampDir && cell.rampDir !== direction) {
+    return;
+  }
+  cell.rampUp = true;
+  cell.rampDown = false;
+  cell.rampDir = direction;
+  cell.rampRise = Math.max(cell.rampRise ?? 0, rise);
+}
+
+function fillMissingElevations(grid) {
+  for (let y = 0; y < grid.length; y += 1) {
+    for (let x = 0; x < grid[y].length; x += 1) {
+      const cell = grid[y][x];
+      if (cell.solid) {
+        continue;
+      }
+      if (!Number.isFinite(cell.elevation)) {
+        cell.elevation = 0;
       }
     }
   }
@@ -864,8 +1086,12 @@ function cloneCell(cell) {
     cover: cell.cover,
     rampUp: cell.rampUp,
     rampDown: cell.rampDown,
+    rampDir: cell.rampDir,
+    rampRise: cell.rampRise,
     platformId: cell.platformId,
-    spawn: cell.spawn
+    spawn: cell.spawn,
+    roomId: cell.roomId,
+    elevation: cell.elevation
   };
 }
 

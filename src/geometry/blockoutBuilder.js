@@ -64,7 +64,7 @@ export function buildBlockoutGroup(layout, colors = {}) {
   for (const level of levels) {
     const halfWidth = (level.width * cellSize) / 2;
     const halfHeight = (level.height * cellSize) / 2;
-    const floorY = level.elevation;
+    const baseElevation = level.elevation;
 
     if (roomHighlightEnabled && Array.isArray(level.rooms)) {
       for (const room of level.rooms) {
@@ -75,6 +75,7 @@ export function buildBlockoutGroup(layout, colors = {}) {
         const roomHeight = room.height * cellSize;
         const centerX = (room.x + room.width / 2) * cellSize - halfWidth;
         const centerZ = (room.y + room.height / 2) * cellSize - halfHeight;
+        const roomElevation = Number.isFinite(room.elevation) ? room.elevation : 0;
         const highlight = new THREE.BoxGeometry(
           roomWidth,
           roomHighlightHeight,
@@ -82,7 +83,10 @@ export function buildBlockoutGroup(layout, colors = {}) {
         );
         highlight.translate(
           centerX,
-          floorY + roomHighlightHeight / 2 + roomHighlightOffset,
+          baseElevation +
+            roomElevation +
+            roomHighlightHeight / 2 +
+            roomHighlightOffset,
           centerZ
         );
         roomHighlightGeometries.push(highlight);
@@ -98,8 +102,13 @@ export function buildBlockoutGroup(layout, colors = {}) {
 
         const wx = x * cellSize + cellSize / 2 - halfWidth;
         const wz = y * cellSize + cellSize / 2 - halfHeight;
+        const cellElevation = getCellElevation(cell);
+        const floorY = baseElevation + cellElevation;
 
         const floor = new THREE.BoxGeometry(cellSize, floorThickness, cellSize);
+        if (cell.rampDir && Number.isFinite(cell.rampRise) && cell.rampRise !== 0) {
+          applyRampToGeometry(floor, cell.rampDir, cell.rampRise);
+        }
         floor.translate(wx, floorY - floorThickness / 2, wz);
         floorGeometries.push(floor);
 
@@ -148,7 +157,7 @@ export function buildBlockoutGroup(layout, colors = {}) {
       wallHeight,
       floorThickness,
       cellSize,
-      baseElevation: floorY,
+      baseElevation,
       wallGeometries
     });
   }
@@ -357,6 +366,51 @@ function addWallsForLevel({
       });
     }
   }
+}
+
+function getCellElevation(cell) {
+  return Number.isFinite(cell?.elevation) ? cell.elevation : 0;
+}
+
+function applyRampToGeometry(geometry, direction, rise) {
+  const position = geometry.attributes.position;
+  if (!position) {
+    return;
+  }
+
+  for (let i = 0; i < position.count; i += 1) {
+    const x = position.getX(i);
+    const y = position.getY(i);
+    const z = position.getZ(i);
+    if (y <= 0) {
+      continue;
+    }
+
+    let delta = 0;
+    switch (direction) {
+      case "x+":
+        if (x > 0) delta = rise;
+        break;
+      case "x-":
+        if (x < 0) delta = rise;
+        break;
+      case "z+":
+        if (z > 0) delta = rise;
+        break;
+      case "z-":
+        if (z < 0) delta = rise;
+        break;
+      default:
+        break;
+    }
+
+    if (delta !== 0) {
+      position.setY(i, y + delta);
+    }
+  }
+
+  position.needsUpdate = true;
+  geometry.computeVertexNormals();
 }
 
 function addMergedMesh(group, geometries, material, options = {}) {
