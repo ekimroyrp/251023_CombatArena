@@ -6,6 +6,7 @@ const DEFAULT_WALL_COLOR = 0xffffff;
 const DEFAULT_COVER_COLOR = 0xff7b00;
 const DEFAULT_PLATFORM_COLOR = 0x89d7e1;
 const DEFAULT_SPAWN_COLOR = 0x59ff00;
+const DEFAULT_ROOM_HIGHLIGHT_COLOR = 0xffa500;
 
 export function buildBlockoutGroup(layout, colors = {}) {
   const group = new THREE.Group();
@@ -16,6 +17,7 @@ export function buildBlockoutGroup(layout, colors = {}) {
   const coverGeometries = [];
   const platformGeometries = [];
   const spawnGeometries = [];
+  const roomHighlightGeometries = [];
 
   const {
     cellSize,
@@ -34,6 +36,10 @@ export function buildBlockoutGroup(layout, colors = {}) {
   const spawnColor = new THREE.Color(
     colors.spawnColor ?? DEFAULT_SPAWN_COLOR
   );
+  const roomHighlightColor = new THREE.Color(
+    colors.roomHighlightColor ?? DEFAULT_ROOM_HIGHLIGHT_COLOR
+  );
+  const roomHighlightEnabled = Boolean(colors.roomHighlight);
 
   const effectivePlatformThickness = Math.max(
     0.001,
@@ -49,11 +55,39 @@ export function buildBlockoutGroup(layout, colors = {}) {
       10
     )
   );
+  const roomHighlightHeight = Math.max(
+    0.02,
+    Math.min(floorThickness * 0.25, 0.15)
+  );
+  const roomHighlightOffset = Math.max(0.01, roomHighlightHeight * 0.25);
 
   for (const level of levels) {
     const halfWidth = (level.width * cellSize) / 2;
     const halfHeight = (level.height * cellSize) / 2;
     const floorY = level.elevation;
+
+    if (roomHighlightEnabled && Array.isArray(level.rooms)) {
+      for (const room of level.rooms) {
+        if (!room || room.width <= 0 || room.height <= 0) {
+          continue;
+        }
+        const roomWidth = room.width * cellSize;
+        const roomHeight = room.height * cellSize;
+        const centerX = (room.x + room.width / 2) * cellSize - halfWidth;
+        const centerZ = (room.y + room.height / 2) * cellSize - halfHeight;
+        const highlight = new THREE.BoxGeometry(
+          roomWidth,
+          roomHighlightHeight,
+          roomHeight
+        );
+        highlight.translate(
+          centerX,
+          floorY + roomHighlightHeight / 2 + roomHighlightOffset,
+          centerZ
+        );
+        roomHighlightGeometries.push(highlight);
+      }
+    }
 
     for (let y = 0; y < level.height; y += 1) {
       for (let x = 0; x < level.width; x += 1) {
@@ -124,6 +158,16 @@ export function buildBlockoutGroup(layout, colors = {}) {
     floorGeometries,
     new THREE.MeshStandardMaterial({ color: floorColor, roughness: 0.85 }),
     { receiveShadow: true }
+  );
+  addMergedMesh(
+    group,
+    roomHighlightGeometries,
+    new THREE.MeshStandardMaterial({
+      color: roomHighlightColor,
+      roughness: 0.35,
+      transparent: true,
+      opacity: 0.6
+    })
   );
   addMergedMesh(
     group,

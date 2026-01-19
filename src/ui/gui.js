@@ -100,6 +100,10 @@ export function createControlsPanel(params, callbacks) {
     .add(params, "rooms", 1, 100, 1)
     .name("Room Amount")
     .onFinishChange(callbacks.onChange);
+  roomsFolder
+    .add(params, "roomHighlight")
+    .name("Room Highlight")
+    .onFinishChange(callbacks.onChange);
   roomsFolder.open();
 
   const corridorsFolder = gui.addFolder("Corridors");

@@ -22,6 +22,7 @@ const DEFAULT_PARAMS = {
   roomSizeMax: 8,
   roomSizeSeed: 1,
   maxRoomSize: 8,
+  roomHighlight: false,
   corridorStyle: "L",
   corridorPaddingMin: 1,
   corridorPaddingMax: 1,
@@ -160,7 +161,8 @@ function rebuildArena(state) {
     wallColor: state.params.wallColor,
     platformColor: state.params.platformColor,
     coverColor: state.params.coverColor,
-    spawnColor: state.params.spawnColor
+    spawnColor: state.params.spawnColor,
+    roomHighlight: state.params.roomHighlight
   });
   updateGroundGrid(state.groundGrid, layout.cellSize, state.params.gridColor);
   state.scene.background.set(state.params.backgroundColor);
