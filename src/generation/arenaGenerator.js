@@ -116,6 +116,7 @@ export function generateArenaLayout(options) {
     wallThickness: config.wallThickness,
     floorThickness,
     platformThickness: config.platformThickness,
+    platformHeight: config.platformHeight,
     levelSpacing,
     levels
   };
@@ -186,12 +187,17 @@ function normalizeOptions(options) {
     0.25,
     10
   );
-  const basePlatforms = clamp(Math.floor(options.platforms ?? 0), 0, 20);
+  const basePlatforms = clamp(Math.floor(options.platforms ?? 0), 0, 100);
   const platformsPerFloor = clamp(
     Math.round(basePlatforms * (styleProfile.verticality ?? 1)),
     0,
-    20
+    100
   );
+  const platformHeightInput = Number.isFinite(options.platformHeight)
+    ? options.platformHeight
+    : wallHeight * 0.5;
+  const platformHeightRaw = clamp(platformHeightInput, 0, 12);
+  const platformHeight = quantize(platformHeightRaw, 0.25);
 
   const coverProbability = clamp01(
     ((options.coverProbability ?? 10.0) * 0.01) * (styleProfile.coverBias ?? 1)
@@ -260,6 +266,7 @@ function normalizeOptions(options) {
     floors,
     platformsPerFloor,
     platformSeed,
+    platformHeight,
     roomSizeMin: effectiveRoomSizeMin,
     roomSizeMax: effectiveRoomSizeMax,
     roomSizeSeed: String(roomSizeSeed),
@@ -897,7 +904,7 @@ function pickPlatformSeed(grid, rng) {
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
       const cell = grid[y][x];
-      if (cell.solid || cell.platformId !== null) {
+      if (cell.solid || cell.platformId !== null || cell.roomId === null) {
         continue;
       }
       const edgeScore = countEdgeScore(grid, x, y);
@@ -957,7 +964,7 @@ function growPlatformFromSeed(grid, seed, platformId, targetSize, rng) {
     }
 
     const cell = grid[current.y][current.x];
-    if (cell.solid || cell.platformId !== null) {
+    if (cell.solid || cell.platformId !== null || cell.roomId === null) {
       continue;
     }
 
@@ -967,7 +974,11 @@ function growPlatformFromSeed(grid, seed, platformId, targetSize, rng) {
     const neighbors = getNeighbors4(current.x, current.y, width, height)
       .filter(({ x, y }) => {
         const neighbor = grid[y][x];
-        return !neighbor.solid && neighbor.platformId === null;
+        return (
+          !neighbor.solid &&
+          neighbor.platformId === null &&
+          neighbor.roomId !== null
+        );
       })
       .sort(
         (a, b) => countEdgeScore(grid, b.x, b.y) - countEdgeScore(grid, a.x, a.y)

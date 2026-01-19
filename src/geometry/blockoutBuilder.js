@@ -25,6 +25,7 @@ export function buildBlockoutGroup(layout, colors = {}) {
     wallThickness: wallThicknessParam,
     floorThickness,
     platformThickness,
+    platformHeight: platformHeightOffset,
     levels
   } = layout;
   const floorColor = new THREE.Color(colors.floorColor ?? DEFAULT_FLOOR_COLOR);
@@ -142,7 +143,10 @@ export function buildBlockoutGroup(layout, colors = {}) {
             platformHeight,
             cellSize
           );
-          const platformTop = floorY + wallHeight * 0.5;
+          const platformOffset = Number.isFinite(platformHeightOffset)
+            ? platformHeightOffset
+            : wallHeight * 0.5;
+          const platformTop = floorY + platformOffset;
           const platformY = platformTop - platformHeight / 2;
           platform.translate(wx, platformY, wz);
           platformGeometries.push(platform);

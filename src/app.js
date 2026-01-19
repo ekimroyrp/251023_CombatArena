@@ -37,6 +37,7 @@ const DEFAULT_PARAMS = {
   wallHide: false,
   floorThickness: 0.25,
   platforms: 0,
+  platformHeight: 3,
   platformSeed: 1,
   platformThickness: 0.25,
   spawnAmount: 0,

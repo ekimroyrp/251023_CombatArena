@@ -150,8 +150,12 @@ export function createControlsPanel(params, callbacks) {
 
   const platformsFolder = gui.addFolder("Platforms");
   platformsFolder
-    .add(params, "platforms", 0, 10, 1)
+    .add(params, "platforms", 0, 100, 1)
     .name("Platform Amount")
+    .onFinishChange(callbacks.onChange);
+  platformsFolder
+    .add(params, "platformHeight", 0, 12, 0.25)
+    .name("Platform Height")
     .onFinishChange(callbacks.onChange);
   platformsFolder
     .add(params, "platformThickness", 0.25, 10, 0.25)
